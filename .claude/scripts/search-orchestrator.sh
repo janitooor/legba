@@ -73,26 +73,29 @@ if [[ "${LOA_SEARCH_MODE}" == "ck" ]]; then
     # Semantic search using ck
     case "${SEARCH_TYPE}" in
         semantic)
-            ck --semantic "${QUERY}" \
+            SEARCH_RESULTS=$(ck --semantic "${QUERY}" \
                 --path "${SEARCH_PATH}" \
                 --top-k "${TOP_K}" \
                 --threshold "${THRESHOLD}" \
-                --jsonl 2>/dev/null || echo ""
-            RESULT_COUNT=$?
+                --jsonl 2>/dev/null || echo "")
+            RESULT_COUNT=$(echo "${SEARCH_RESULTS}" | grep -c '^{' || echo 0)
+            echo "${SEARCH_RESULTS}"
             ;;
         hybrid)
-            ck --hybrid "${QUERY}" \
+            SEARCH_RESULTS=$(ck --hybrid "${QUERY}" \
                 --path "${SEARCH_PATH}" \
                 --top-k "${TOP_K}" \
                 --threshold "${THRESHOLD}" \
-                --jsonl 2>/dev/null || echo ""
-            RESULT_COUNT=$?
+                --jsonl 2>/dev/null || echo "")
+            RESULT_COUNT=$(echo "${SEARCH_RESULTS}" | grep -c '^{' || echo 0)
+            echo "${SEARCH_RESULTS}"
             ;;
         regex)
-            ck --regex "${QUERY}" \
+            SEARCH_RESULTS=$(ck --regex "${QUERY}" \
                 --path "${SEARCH_PATH}" \
-                --jsonl 2>/dev/null || echo ""
-            RESULT_COUNT=$?
+                --jsonl 2>/dev/null || echo "")
+            RESULT_COUNT=$(echo "${SEARCH_RESULTS}" | grep -c '^{' || echo 0)
+            echo "${SEARCH_RESULTS}"
             ;;
         *)
             echo "Error: Unknown search type: ${SEARCH_TYPE}" >&2
@@ -109,26 +112,28 @@ else
             KEYWORDS=$(echo "${QUERY}" | tr '[:space:]' '\n' | grep -v '^$' | sort -u | paste -sd '|' -)
 
             if [[ -n "${KEYWORDS}" ]]; then
-                grep -rn -E "${KEYWORDS}" \
+                SEARCH_RESULTS=$(grep -rn -E "${KEYWORDS}" \
                     --include="*.js" --include="*.ts" --include="*.py" --include="*.go" \
                     --include="*.rs" --include="*.java" --include="*.cpp" --include="*.c" \
                     --include="*.sh" --include="*.bash" --include="*.md" --include="*.yaml" \
                     --include="*.yml" --include="*.json" --include="*.toml" \
-                    "${SEARCH_PATH}" 2>/dev/null | head -n "${TOP_K}" || echo ""
-                RESULT_COUNT=${PIPESTATUS[0]}
+                    "${SEARCH_PATH}" 2>/dev/null | head -n "${TOP_K}" || echo "")
+                RESULT_COUNT=$(echo "${SEARCH_RESULTS}" | grep -c '.' || echo 0)
+                echo "${SEARCH_RESULTS}"
             else
                 echo "" # Empty query
                 RESULT_COUNT=0
             fi
             ;;
         regex)
-            grep -rn -E "${QUERY}" \
+            SEARCH_RESULTS=$(grep -rn -E "${QUERY}" \
                 --include="*.js" --include="*.ts" --include="*.py" --include="*.go" \
                 --include="*.rs" --include="*.java" --include="*.cpp" --include="*.c" \
                 --include="*.sh" --include="*.bash" --include="*.md" --include="*.yaml" \
                 --include="*.yml" --include="*.json" --include="*.toml" \
-                "${SEARCH_PATH}" 2>/dev/null | head -n "${TOP_K}" || echo ""
-            RESULT_COUNT=${PIPESTATUS[0]}
+                "${SEARCH_PATH}" 2>/dev/null | head -n "${TOP_K}" || echo "")
+            RESULT_COUNT=$(echo "${SEARCH_RESULTS}" | grep -c '.' || echo 0)
+            echo "${SEARCH_RESULTS}"
             ;;
         *)
             echo "Error: Unknown search type: ${SEARCH_TYPE}" >&2
@@ -143,9 +148,9 @@ jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME:-unknown}" \
     --arg phase "execute" \
-    --argjson result_code "${RESULT_COUNT}" \
+    --argjson result_count "${RESULT_COUNT}" \
     --arg mode "${LOA_SEARCH_MODE}" \
-    '{ts: $ts, agent: $agent, phase: $phase, result_code: $result_code, mode: $mode}' \
+    '{ts: $ts, agent: $agent, phase: $phase, result_count: $result_count, mode: $mode}' \
     >> "${TRAJECTORY_FILE}"
 
 exit 0

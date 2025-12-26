@@ -13,6 +13,14 @@ set -euo pipefail
 
 PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
 
+# Check for bc dependency (used in filter_by_score)
+if command -v bc >/dev/null 2>&1; then
+    export BC_AVAILABLE=true
+else
+    echo "Warning: bc not found, score filtering will be disabled" >&2
+    export BC_AVAILABLE=false
+fi
+
 # ============================================================================
 # PUBLIC API FUNCTIONS
 # ============================================================================
@@ -92,21 +100,18 @@ grep_to_jsonl() {
     while IFS=: read -r file line snippet; do
         # Skip empty lines
         [[ -z "${file}" ]] && continue
+        [[ -z "${line}" ]] && line=0
 
         # Normalize to absolute path
         if [[ ! "${file}" =~ ^/ ]]; then
             file="${PROJECT_ROOT}/${file}"
         fi
 
-        # Escape special characters for JSON
-        snippet_escaped=$(echo "${snippet}" | jq -Rs .)
-        file_escaped=$(echo "${file}" | jq -Rs .)
-
-        # Output JSONL
+        # Output JSONL - use --arg for strings (jq handles escaping internally)
         jq -n \
             --arg file "${file}" \
-            --argjson line "${line:-0}" \
-            --argjson snippet "${snippet_escaped}" \
+            --argjson line "${line}" \
+            --arg snippet "${snippet}" \
             '{file: $file, line: $line, snippet: $snippet, score: 0.0}'
     done
 }
@@ -212,10 +217,15 @@ filter_by_score() {
     while IFS= read -r line; do
         [[ -z "${line}" ]] && continue
 
-        score=$(echo "${line}" | jq -r '.score // 0.0')
+        if [[ "${BC_AVAILABLE}" == "true" ]]; then
+            score=$(echo "${line}" | jq -r '.score // 0.0')
 
-        # Use bc for float comparison
-        if (( $(echo "${score} >= ${min_score}" | bc -l) )); then
+            # Use bc for float comparison
+            if (( $(echo "${score} >= ${min_score}" | bc -l) )); then
+                echo "${line}"
+            fi
+        else
+            # Fallback: no filtering (return all results)
             echo "${line}"
         fi
     done

@@ -86,6 +86,11 @@ if command -v bd >/dev/null 2>&1; then
 fi
 
 # Log to trajectory
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+TRAJECTORY_DIR="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory"
+TRAJECTORY_FILE="${TRAJECTORY_DIR}/$(date +%Y-%m-%d).jsonl"
+mkdir -p "${TRAJECTORY_DIR}"
+
 jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME}" \
@@ -98,7 +103,7 @@ jq -n \
     --argjson doc_mentions "${doc_mentions}" \
     --arg status "confirmed_ghost" \
     '{ts: $ts, agent: $agent, phase: $phase, feature: $feature, query1: $query1, results1: $results1, query2: $query2, results2: $results2, doc_mentions: $doc_mentions, status: $status}' \
-    >> loa-grimoire/a2a/trajectory/$(date +%Y-%m-%d).jsonl
+    >> "${TRAJECTORY_FILE}"
 
 # Write to drift report
 echo "| OAuth2 SSO | PRD §3.2 | Q1: 0, Q2: 0 | Low | bd-123 | Remove from docs |" \
@@ -115,6 +120,11 @@ echo "   - Doc mentions: ${doc_mentions} (≥3 references)" >&2
 echo "   - Action: Human audit required" >&2
 
 # Log to trajectory
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+TRAJECTORY_DIR="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory"
+TRAJECTORY_FILE="${TRAJECTORY_DIR}/$(date +%Y-%m-%d).jsonl"
+mkdir -p "${TRAJECTORY_DIR}"
+
 jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME}" \
@@ -123,7 +133,7 @@ jq -n \
     --arg status "high_ambiguity" \
     --arg reason "0 code results but ${doc_mentions} doc mentions - manual review needed" \
     '{ts: $ts, agent: $agent, phase: $phase, feature: $feature, status: $status, reason: $reason}' \
-    >> loa-grimoire/a2a/trajectory/$(date +%Y-%m-%d).jsonl
+    >> "${TRAJECTORY_FILE}"
 
 # Write to drift report with annotation
 echo "| OAuth2 SSO | PRD §3.2 | Q1: 0, Q2: 0 | **High (${doc_mentions} mentions)** | - | **Human audit required** |" \

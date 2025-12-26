@@ -146,6 +146,11 @@ if command -v bd >/dev/null 2>&1; then
 fi
 
 # Log to trajectory
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+TRAJECTORY_DIR="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory"
+TRAJECTORY_FILE="${TRAJECTORY_DIR}/$(date +%Y-%m-%d).jsonl"
+mkdir -p "${TRAJECTORY_DIR}"
+
 jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME}" \
@@ -157,7 +162,7 @@ jq -n \
     --argjson dependents "${dependent_count}" \
     --arg risk "HIGH" \
     '{ts: $ts, agent: $agent, phase: $phase, module: $module, module_name: $module_name, classification: $classification, similarity: $similarity, dependents: $dependents, risk: $risk}' \
-    >> loa-grimoire/a2a/trajectory/$(date +%Y-%m-%d).jsonl
+    >> "${TRAJECTORY_FILE}"
 
 # Write to drift report
 echo "| ${module_name} | ${file} | Orphaned | HIGH | ${dependent_count} files | bd-124 | **Urgent: Document or remove** |" \
@@ -168,6 +173,11 @@ echo "| ${module_name} | ${file} | Orphaned | HIGH | ${dependent_count} files | 
 
 ```bash
 # Log to trajectory
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+TRAJECTORY_DIR="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory"
+TRAJECTORY_FILE="${TRAJECTORY_DIR}/$(date +%Y-%m-%d).jsonl"
+mkdir -p "${TRAJECTORY_DIR}"
+
 jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME}" \
@@ -179,7 +189,7 @@ jq -n \
     --arg risk "MEDIUM" \
     --arg doc_match "${best_doc_match}" \
     '{ts: $ts, agent: $agent, phase: $phase, module: $module, module_name: $module_name, classification: $classification, similarity: $similarity, risk: $risk, doc_match: $doc_match}' \
-    >> loa-grimoire/a2a/trajectory/$(date +%Y-%m-%d).jsonl
+    >> "${TRAJECTORY_FILE}"
 
 # Write to drift report
 echo "| ${module_name} | ${file} | Drifted | MEDIUM | N/A | - | Update ${best_doc_match} |" \
@@ -190,6 +200,11 @@ echo "| ${module_name} | ${file} | Drifted | MEDIUM | N/A | - | Update ${best_do
 
 ```bash
 # Log to trajectory
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+TRAJECTORY_DIR="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory"
+TRAJECTORY_FILE="${TRAJECTORY_DIR}/$(date +%Y-%m-%d).jsonl"
+mkdir -p "${TRAJECTORY_DIR}"
+
 jq -n \
     --arg ts "$(date -Iseconds)" \
     --arg agent "${LOA_AGENT_NAME}" \
@@ -200,7 +215,7 @@ jq -n \
     --argjson similarity "${max_similarity}" \
     --arg risk "LOW" \
     '{ts: $ts, agent: $agent, phase: $phase, module: $module, module_name: $module_name, classification: $classification, similarity: $similarity, risk: $risk}' \
-    >> loa-grimoire/a2a/trajectory/$(date +%Y-%m-%d).jsonl
+    >> "${TRAJECTORY_FILE}"
 
 # Write to drift report
 echo "| ${module_name} | ${file} | Partial | LOW | N/A | - | Complete documentation |" \
