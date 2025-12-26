@@ -161,31 +161,66 @@ estimate_tokens() {
 }
 
 parse_jsonl_search_results() {
-    # Parse JSONL search results and extract key info
+    # Parse JSONL search results with failure-aware handling
     #
     # Stdin: JSONL search results
     # Stdout: Human-readable format
     #
     # Example:
     #   semantic_search "auth" | parse_jsonl_search_results
+    #
+    # Failure Handling:
+    #   - Drops malformed JSON lines (no crash)
+    #   - Logs dropped lines to trajectory
+    #   - Calculates data loss ratio
 
     local count=0
+    local line_num=0
+    local parse_errors=0
+    local dropped_lines=()
+    local trajectory_log="${PROJECT_ROOT}/loa-grimoire/a2a/trajectory/${LOA_AGENT_NAME:-unknown}-$(date +%Y-%m-%d).jsonl"
+
     while IFS= read -r line; do
+        ((line_num++))
+
         # Skip empty lines
         [[ -z "${line}" ]] && continue
 
-        # Parse JSON
-        file=$(echo "${line}" | jq -r '.file // empty')
-        line_num=$(echo "${line}" | jq -r '.line // empty')
-        snippet=$(echo "${line}" | jq -r '.snippet // empty' | head -c 80)
-        score=$(echo "${line}" | jq -r '.score // 0.0')
+        # Try to parse JSON (failure-aware)
+        if ! echo "${line}" | jq empty 2>/dev/null; then
+            # Malformed JSON - DROP and CONTINUE (no crash)
+            ((parse_errors++))
+            dropped_lines+=("Line ${line_num}: Parse error")
+            # Log to trajectory (if agent context available)
+            if [[ -n "${LOA_AGENT_NAME:-}" ]]; then
+                echo "{\"ts\":\"$(date -Iseconds)\",\"agent\":\"${LOA_AGENT_NAME}\",\"phase\":\"jsonl_parse_error\",\"line\":${line_num},\"error\":\"Malformed JSON\",\"data\":\"${line:0:50}...\"}" >> "${trajectory_log}" 2>/dev/null || true
+            fi
+            continue
+        fi
 
-        if [[ -n "${file}" ]] && [[ -n "${line_num}" ]]; then
-            echo "[$((++count))] ${file}:${line_num} (score: ${score})"
+        # Parse JSON fields
+        file=$(echo "${line}" | jq -r '.file // empty' 2>/dev/null)
+        line_num_val=$(echo "${line}" | jq -r '.line // empty' 2>/dev/null)
+        snippet=$(echo "${line}" | jq -r '.snippet // empty' 2>/dev/null | head -c 80)
+        score=$(echo "${line}" | jq -r '.score // 0.0' 2>/dev/null)
+
+        if [[ -n "${file}" ]] && [[ -n "${line_num_val}" ]]; then
+            echo "[$((++count))] ${file}:${line_num_val} (score: ${score})"
             echo "    ${snippet}..."
             echo ""
         fi
     done
+
+    # Log data loss summary if errors occurred
+    if [[ ${parse_errors} -gt 0 ]]; then
+        local data_loss_ratio=$(echo "scale=4; ${parse_errors} / ${line_num}" | bc 2>/dev/null || echo "0.0")
+        echo "Warning: ${parse_errors} malformed JSONL lines dropped (${data_loss_ratio} data loss ratio)" >&2
+
+        # Log to trajectory
+        if [[ -n "${LOA_AGENT_NAME:-}" ]] && [[ ${parse_errors} -gt 0 ]]; then
+            echo "{\"ts\":\"$(date -Iseconds)\",\"agent\":\"${LOA_AGENT_NAME}\",\"phase\":\"jsonl_parse_summary\",\"parse_errors\":${parse_errors},\"total_lines\":${line_num},\"data_loss_ratio\":${data_loss_ratio}}" >> "${trajectory_log}" 2>/dev/null || true
+        fi
+    fi
 }
 
 count_search_results() {
