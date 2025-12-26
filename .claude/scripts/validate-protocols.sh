@@ -25,12 +25,12 @@ log_info() {
 
 log_warn() {
     echo -e "${YELLOW}⚠${NC} $*"
-    ((warnings++))
+    ((warnings++)) || true
 }
 
 log_error() {
     echo -e "${RED}✗${NC} $*"
-    ((errors++))
+    ((errors++)) || true
 }
 
 check_protocol_structure() {
@@ -41,7 +41,7 @@ check_protocol_structure() {
     echo "Checking: $protocol_name"
     echo "----------------------------------------"
 
-    ((total_protocols++))
+    ((total_protocols++)) || true
 
     # Check 1: File exists and is readable
     if [ ! -r "$protocol_file" ]; then
@@ -118,7 +118,7 @@ check_protocol_structure() {
 
     # If no errors for this protocol
     if [ "$errors" -eq 0 ]; then
-        ((valid_protocols++))
+        ((valid_protocols++)) || true
         log_info "Protocol validation passed"
     fi
 }

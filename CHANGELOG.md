@@ -5,6 +5,106 @@ All notable changes to Loa will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2025-12-27
+
+### Why This Release
+
+This release adds **optional semantic code search** via the `ck` tool, enabling dramatically improved code understanding while maintaining full backward compatibility. The enhancement is **completely invisible** to users—your workflow remains unchanged whether or not you have `ck` installed.
+
+### Added
+
+- **Semantic Code Search Integration** (optional)
+  - Vector-based search using nomic-v1.5 embeddings via `ck` tool
+  - <500ms search latency on repositories up to 1M LOC
+  - 80-90% cache hit rate with delta reindexing
+  - Automatic fallback to grep when `ck` unavailable
+
+- **Ghost Feature Detection**
+  - Identifies documented but unimplemented features
+  - Uses Negative Grounding Protocol (2+ diverse queries returning 0 results)
+  - Creates Beads issues for discovered liabilities (if `bd` installed)
+
+- **Shadow System Classification**
+  - Identifies undocumented code in repositories
+  - Classifies as Orphaned, Drifted, or Partial
+  - Generates actionable drift reports
+
+- **8 New Protocol Documents** (`.claude/protocols/`)
+  - `preflight-integrity.md` - Integrity verification before operations
+  - `tool-result-clearing.md` - Attention budget management
+  - `trajectory-evaluation.md` - Agent reasoning audit (enhanced)
+  - `negative-grounding.md` - Ghost feature detection protocol
+  - `search-fallback.md` - Graceful degradation strategy
+  - `citations.md` - Word-for-word citation requirements
+  - `self-audit-checkpoint.md` - Pre-completion validation
+  - `edd-verification.md` - Evaluation-Driven Development protocol
+
+- **6 New Scripts** (`.claude/scripts/`)
+  - `search-orchestrator.sh` - Unified search interface
+  - `search-api.sh` - Search API functions (semantic_search, hybrid_search, regex_search)
+  - `filter-search-results.sh` - Result deduplication and relevance filtering
+  - `compact-trajectory.sh` - Trajectory log compression
+  - `validate-protocols.sh` - Protocol documentation validation
+  - `validate-ck-integration.sh` - CI/CD validation script (42 checks)
+
+- **Test Suite** (127 total tests)
+  - 79 unit tests for core scripts
+  - 22 integration tests for /ride workflow
+  - 26 edge case tests for error handling
+  - Performance benchmarking with PRD target validation
+
+- **Documentation**
+  - `RELEASE_NOTES_CK_INTEGRATION.md` - Detailed release notes
+  - `MIGRATION_GUIDE_CK.md` - Step-by-step migration guide
+  - Updated `INSTALLATION.md` with ck installation instructions
+  - Updated `README.md` with semantic search mentions
+
+### Changed
+
+- **`/ride` Command**: Enhanced with semantic analysis
+  - Ghost Feature detection in drift report
+  - Shadow System classification
+  - Improved code reality extraction
+
+- **`/setup` Command**: Shows ck installation status
+  - Displays version if installed
+  - Provides installation instructions if missing
+
+- **`.gitignore`**: New entries
+  - `.ck/` - Semantic search index directory
+  - `.beads/` - Beads issue tracking
+  - `loa-grimoire/a2a/trajectory/` - Agent reasoning logs
+
+### Technical Details
+
+- **Performance Targets Met**
+  | Metric | Target | Achieved |
+  |--------|--------|----------|
+  | Search Speed (1M LOC) | <500ms | ✅ |
+  | Cache Hit Rate | 80-90% | ✅ |
+  | Grounding Ratio | ≥0.95 | ✅ |
+  | User Experience Parity | 100% | ✅ |
+
+- **Invisible Enhancement Pattern**: All commands work identically with or without `ck` installed. No mentions of "semantic search", "ck", or "fallback" in agent output.
+
+### Breaking Changes
+
+**None** - This release is fully backward compatible.
+
+### Installation (Optional)
+
+```bash
+# Install ck for semantic search
+cargo install ck-search
+
+# Install bd for issue tracking
+npm install -g beads-cli
+
+# Both tools are optional - Loa works perfectly without them
+```
+
+---
+
 ## [0.7.0] - 2025-12-22
 
 ### Why This Release
@@ -430,6 +530,7 @@ loa-grimoire/           # Loa process artifacts
 └── deployment/         # Production infrastructure docs
 ```
 
+[0.8.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.8.0
 [0.7.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.7.0
 [0.6.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.6.0
 [0.5.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.5.0

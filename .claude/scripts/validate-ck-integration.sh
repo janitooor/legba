@@ -43,19 +43,19 @@ log_check() {
 
 pass() {
     echo -e "${GREEN}✓ PASS${NC}"
-    ((checks_passed++))
+    ((checks_passed++)) || true
 }
 
 fail() {
     echo -e "${RED}✗ FAIL${NC}"
     echo -e "    ${RED}$*${NC}"
-    ((checks_failed++))
+    ((checks_failed++)) || true
 }
 
 warn() {
     echo -e "${YELLOW}⚠ WARN${NC}"
     echo -e "    ${YELLOW}$*${NC}"
-    ((checks_warned++))
+    ((checks_warned++)) || true
 }
 
 # ============================================================================
