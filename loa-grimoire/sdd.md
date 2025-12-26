@@ -36,6 +36,15 @@ The architecture enforces three critical invariants:
 2. [System Architecture](#system-architecture)
 3. [Technology Stack](#technology-stack)
 4. [Component Design](#component-design)
+   - 4.1 Pre-Flight Integrity Checker
+   - 4.2 Search Orchestrator
+   - 4.3 JSONL Parser
+   - 4.4 Tool Result Clearing Manager
+   - 4.5 Ghost Feature Detector
+   - 4.6 Shadow System Classifier
+   - 4.7 **Agent Chaining Component (FR-8)**
+   - 4.8 **Context Filtering Component (FR-9)**
+   - 4.9 **Command Namespace Protection (FR-10)**
 5. [Data Architecture](#data-architecture)
 6. [API Design](#api-design)
 7. [Security Architecture](#security-architecture)
@@ -1000,6 +1009,762 @@ def find_dependents(module_path: str) -> List[str]:
 
 ---
 
+### 3.7 Agent Chaining Component (Workflow Automation)
+
+**Location**: `.claude/scripts/suggest-next-step.sh`, `.claude/workflow-chain.yaml`
+**Protocol**: N/A (new feature)
+**PRD Reference**: FR-8
+
+**Responsibility**: Automatically suggest the next logical command after phase completion, enabling seamless workflow progression.
+
+**Design Overview**:
+
+The Agent Chaining system uses a declarative workflow definition to determine the next step based on current phase completion and validation conditions. This maintains workflow momentum without requiring users to memorize command sequences.
+
+**Workflow Chain Definition**:
+
+```yaml
+# .claude/workflow-chain.yaml
+version: 1.0
+
+workflow:
+  plan-and-analyze:
+    next: architect
+    condition:
+      type: file_exists
+      path: loa-grimoire/prd.md
+    message: "Ready for architectural design."
+
+  architect:
+    next: sprint-plan
+    condition:
+      type: file_exists
+      path: loa-grimoire/sdd.md
+    message: "Ready for sprint planning."
+
+  sprint-plan:
+    next: implement sprint-1
+    condition:
+      type: file_exists
+      path: loa-grimoire/sprint.md
+    message: "Ready to begin implementation."
+
+  implement:
+    next: review-sprint {sprint}
+    condition:
+      type: file_exists
+      path: loa-grimoire/a2a/sprint-{sprint}/reviewer.md
+    message: "Implementation complete. Ready for code review."
+
+  review-sprint:
+    next_on_approval: audit-sprint {sprint}
+    next_on_feedback: implement {sprint}
+    condition:
+      type: file_content_match
+      path: loa-grimoire/a2a/sprint-{sprint}/engineer-feedback.md
+      patterns:
+        approval: "All good"
+        feedback: "(CHANGES_REQUIRED|TODO|FIXME)"
+    message_approval: "Code review passed. Ready for security audit."
+    message_feedback: "Code review feedback provided. Ready to address issues."
+
+  audit-sprint:
+    next_on_approval: implement sprint-{N+1}
+    next_on_changes: implement {sprint}
+    condition:
+      type: file_content_match
+      path: loa-grimoire/a2a/sprint-{sprint}/auditor-sprint-feedback.md
+      patterns:
+        approval: "APPROVED - LETS FUCKING GO"
+        changes: "CHANGES_REQUIRED"
+    message_approval: "Security audit passed! Ready for next sprint."
+    message_changes: "Security feedback provided. Ready to address issues."
+```
+
+**Suggestion Engine**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/suggest-next-step.sh
+
+set -euo pipefail
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+WORKFLOW_FILE="${PROJECT_ROOT}/.claude/workflow-chain.yaml"
+
+# Parse arguments
+CURRENT_PHASE="${1}"
+SPRINT_ID="${2:-}"
+
+# Load workflow definition
+if [[ ! -f "${WORKFLOW_FILE}" ]]; then
+    echo "No workflow chain configured" >&2
+    exit 0
+fi
+
+# Extract next step for current phase
+NEXT_STEP=$(yq e ".workflow.${CURRENT_PHASE}.next" "${WORKFLOW_FILE}")
+
+if [[ "${NEXT_STEP}" == "null" ]] || [[ -z "${NEXT_STEP}" ]]; then
+    # Check for conditional routing (approval vs feedback)
+    NEXT_ON_APPROVAL=$(yq e ".workflow.${CURRENT_PHASE}.next_on_approval" "${WORKFLOW_FILE}")
+    NEXT_ON_FEEDBACK=$(yq e ".workflow.${CURRENT_PHASE}.next_on_feedback" "${WORKFLOW_FILE}")
+
+    if [[ "${NEXT_ON_APPROVAL}" != "null" ]]; then
+        # Determine which path based on feedback file content
+        FEEDBACK_FILE="${PROJECT_ROOT}/loa-grimoire/a2a/sprint-${SPRINT_ID}/engineer-feedback.md"
+
+        if [[ -f "${FEEDBACK_FILE}" ]]; then
+            if grep -q "All good" "${FEEDBACK_FILE}"; then
+                NEXT_STEP="${NEXT_ON_APPROVAL}"
+                MESSAGE=$(yq e ".workflow.${CURRENT_PHASE}.message_approval" "${WORKFLOW_FILE}")
+            else
+                NEXT_STEP="${NEXT_ON_FEEDBACK}"
+                MESSAGE=$(yq e ".workflow.${CURRENT_PHASE}.message_feedback" "${WORKFLOW_FILE}")
+            fi
+        fi
+    fi
+fi
+
+# Variable substitution for sprint IDs
+if [[ -n "${SPRINT_ID}" ]]; then
+    NEXT_STEP="${NEXT_STEP//\{sprint\}/${SPRINT_ID}}"
+
+    # Handle {N+1} pattern for next sprint
+    if [[ "${NEXT_STEP}" =~ \{N\+1\} ]]; then
+        NEXT_SPRINT=$((SPRINT_ID + 1))
+        NEXT_STEP="${NEXT_STEP//sprint-\{N+1\}/sprint-${NEXT_SPRINT}}"
+    fi
+fi
+
+# Get default message if not already set
+if [[ -z "${MESSAGE:-}" ]]; then
+    MESSAGE=$(yq e ".workflow.${CURRENT_PHASE}.message" "${WORKFLOW_FILE}")
+fi
+
+# Validate condition before suggesting
+CONDITION_TYPE=$(yq e ".workflow.${CURRENT_PHASE}.condition.type" "${WORKFLOW_FILE}")
+CONDITION_PATH=$(yq e ".workflow.${CURRENT_PHASE}.condition.path" "${WORKFLOW_FILE}")
+
+# Replace variables in path
+CONDITION_PATH="${CONDITION_PATH//\{sprint\}/${SPRINT_ID}}"
+
+case "${CONDITION_TYPE}" in
+    file_exists)
+        if [[ ! -f "${PROJECT_ROOT}/${CONDITION_PATH}" ]]; then
+            echo "Condition not met: ${CONDITION_PATH} does not exist" >&2
+            exit 1
+        fi
+        ;;
+    file_content_match)
+        # Already handled above in conditional routing
+        ;;
+esac
+
+# Output suggestion in structured format
+cat <<EOF
+
+## Next Step
+
+${MESSAGE}
+
+**Recommended**: \`/${NEXT_STEP}\`
+
+Would you like to proceed?
+EOF
+```
+
+**Agent Integration**:
+
+Each agent skill's completion includes:
+
+```markdown
+# In agent skill completion (e.g., .claude/skills/discovering-requirements/SKILL.md)
+
+## Completion Protocol
+
+After successfully completing the PRD:
+
+1. Verify all deliverables:
+   - loa-grimoire/prd.md exists
+   - All functional requirements documented
+   - Stakeholder context captured
+
+2. Log completion to trajectory
+
+3. Suggest next step:
+   ```bash
+   .claude/scripts/suggest-next-step.sh "plan-and-analyze"
+   ```
+```
+
+**User Interaction Flow**:
+
+```
+Agent: "PRD generation complete. All 75 functional requirements documented."
+
+[Agent internally calls: suggest-next-step.sh plan-and-analyze]
+
+## Next Step
+
+Ready for architectural design.
+
+**Recommended**: `/architect`
+
+Would you like to proceed?
+
+User: [Types `/architect` to accept, or provides different command]
+```
+
+**Key Design Properties**:
+
+1. **Declarative Configuration**: Workflow chain defined in YAML, not hardcoded
+2. **Conditional Routing**: Different next steps based on approval vs feedback
+3. **Variable Substitution**: Dynamic sprint IDs, user context
+4. **Validation Before Suggestion**: Check conditions before suggesting
+5. **Non-Blocking**: User can always decline or choose different command
+6. **Extensible**: Users can customize workflow in `.claude/overrides/workflow-chain.yaml`
+
+**Configuration Precedence**:
+
+```
+1. .claude/overrides/workflow-chain.yaml (highest priority)
+2. .claude/workflow-chain.yaml (framework default)
+```
+
+**Backward Compatibility**:
+
+- Workflow chain is purely additive (suggestions only)
+- All commands work independently (no forced chaining)
+- Users who ignore suggestions experience no change
+- No breaking changes to existing command structure
+
+---
+
+### 3.8 Context Filtering Component (Pollution Prevention)
+
+**Location**: `.claude/scripts/filter-search-results.sh`, configuration in `.loa.config.yaml`
+**Protocol**: N/A (new feature)
+**PRD Reference**: FR-9
+
+**Responsibility**: Filter low-signal documents from search results to maintain agent focus and prevent context window pollution.
+
+**Design Overview**:
+
+The Context Filtering system provides multiple mechanisms to exclude low-signal content from search operations:
+
+1. **Signal Markers**: Frontmatter-based filtering (high/medium/low)
+2. **Archive Zone**: Explicit exclusion of `loa-grimoire/archive/`
+3. **Pattern Excludes**: Configurable glob patterns for session artifacts
+4. **Watch Paths**: Configurable drift detection scope
+
+**Configuration Schema**:
+
+```yaml
+# .loa.config.yaml
+drift_detection:
+  watch_paths:
+    - ".claude/"           # Framework files
+    - "loa-grimoire/"      # Agent workspace
+    - "docs/architecture/" # Custom documentation
+    - ".meta/"             # Custom workflow directory (user-added)
+  exclude_patterns:
+    - "**/node_modules/**"
+    - "**/*.log"
+    - "**/target/**"       # Rust build artifacts
+    - "**/dist/**"         # Build output
+
+context_filtering:
+  archive_zone: "loa-grimoire/archive/"  # Excluded from all searches
+
+  default_excludes:
+    - "**/brainstorm-*.md"
+    - "**/session-notes-*.md"
+    - "**/meeting-*.md"
+    - "**/draft-*.md"
+    - "**/scratch-*.md"
+
+  signal_threshold: "medium"   # Exclude 'low' signal by default
+
+  draft_ttl_days: 30           # Auto-suggest archival after 30 days
+
+  enable_filtering: true       # Master toggle
+```
+
+**Signal Marker Format**:
+
+```markdown
+---
+signal: low
+type: brainstorm
+date: 2024-01-15
+archived: false
+---
+
+# Brainstorm Session Notes
+
+Random thoughts that should not pollute search results...
+```
+
+**Signal Levels**:
+
+| Level | Description | Search Behavior |
+|-------|-------------|-----------------|
+| `high` | Core architectural docs, PRD, SDD | Always included |
+| `medium` | Sprint plans, implementation notes | Included by default |
+| `low` | Brainstorms, meeting notes, drafts | Excluded by default (configurable) |
+| (no marker) | Treated as `medium` | Included by default |
+
+**Search Integration**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/filter-search-results.sh
+
+set -euo pipefail
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+CONFIG="${PROJECT_ROOT}/.loa.config.yaml"
+
+# Parse configuration
+ARCHIVE_ZONE=$(yq e '.context_filtering.archive_zone // "loa-grimoire/archive/"' "${CONFIG}")
+SIGNAL_THRESHOLD=$(yq e '.context_filtering.signal_threshold // "medium"' "${CONFIG}")
+ENABLE_FILTERING=$(yq e '.context_filtering.enable_filtering // true' "${CONFIG}")
+
+# Master toggle
+if [[ "${ENABLE_FILTERING}" != "true" ]]; then
+    cat  # Pass through unfiltered
+    exit 0
+fi
+
+# Build exclude patterns for ck
+build_ck_excludes() {
+    local excludes=()
+
+    # Archive zone
+    excludes+=("--exclude" "${ARCHIVE_ZONE}")
+
+    # Default exclude patterns
+    while IFS= read -r pattern; do
+        if [[ -n "${pattern}" ]] && [[ "${pattern}" != "null" ]]; then
+            excludes+=("--exclude" "${pattern}")
+        fi
+    done < <(yq e '.context_filtering.default_excludes[]' "${CONFIG}" 2>/dev/null)
+
+    echo "${excludes[@]}"
+}
+
+# Build exclude patterns for grep
+build_grep_excludes() {
+    local excludes=()
+
+    # Archive zone (convert path to dir name)
+    archive_dir=$(basename "${ARCHIVE_ZONE}")
+    excludes+=("--exclude-dir=${archive_dir}")
+
+    # Pattern excludes
+    while IFS= read -r pattern; do
+        if [[ -n "${pattern}" ]] && [[ "${pattern}" != "null" ]]; then
+            # Convert glob to grep exclude
+            pattern_name=$(basename "${pattern}")
+            excludes+=("--exclude=${pattern_name}")
+        fi
+    done < <(yq e '.context_filtering.default_excludes[]' "${CONFIG}" 2>/dev/null)
+
+    echo "${excludes[@]}"
+}
+
+# Filter by signal marker (post-processing)
+filter_by_signal() {
+    local file="$1"
+
+    # Extract signal marker from frontmatter
+    if [[ -f "${file}" ]]; then
+        signal=$(awk '/^---$/,/^---$/ {if ($1 == "signal:") print $2}' "${file}" | head -1)
+
+        # If no signal marker, treat as medium
+        signal="${signal:-medium}"
+
+        case "${SIGNAL_THRESHOLD}" in
+            high)
+                # Only high signal
+                [[ "${signal}" == "high" ]]
+                ;;
+            medium)
+                # high or medium
+                [[ "${signal}" == "high" ]] || [[ "${signal}" == "medium" ]]
+                ;;
+            low)
+                # Include all (no filtering)
+                true
+                ;;
+        esac
+    fi
+}
+
+# Export functions for use in search scripts
+export -f filter_by_signal
+export ARCHIVE_ZONE SIGNAL_THRESHOLD
+```
+
+**Drift Detection Integration**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/detect-drift.sh (enhanced)
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+CONFIG="${PROJECT_ROOT}/.loa.config.yaml"
+
+# Load configured watch paths
+readarray -t WATCH_PATHS < <(yq e '.drift_detection.watch_paths[]' "${CONFIG}")
+
+# Default watch paths if not configured
+if [[ ${#WATCH_PATHS[@]} -eq 0 ]]; then
+    WATCH_PATHS=(
+        ".claude/"
+        "loa-grimoire/"
+    )
+fi
+
+echo "Detecting drift in configured watch paths..." >&2
+
+# Check git status for each watch path
+for path in "${WATCH_PATHS[@]}"; do
+    if [[ -d "${PROJECT_ROOT}/${path}" ]]; then
+        echo "Checking: ${path}" >&2
+
+        # Get unstaged/uncommitted changes
+        git -C "${PROJECT_ROOT}" status --porcelain "${path}" | while read -r status file; do
+            echo "  ${status} ${file}"
+        done
+    fi
+done
+```
+
+**Search Wrapper Enhancement**:
+
+```bash
+# In .claude/scripts/search-orchestrator.sh
+
+# Build exclude arguments
+source "${PROJECT_ROOT}/.claude/scripts/filter-search-results.sh"
+
+if [[ "${LOA_SEARCH_MODE}" == "ck" ]]; then
+    # Get ck excludes
+    readarray -t CK_EXCLUDES < <(build_ck_excludes)
+
+    ck --semantic "${QUERY}" \
+        --path "${SEARCH_PATH}" \
+        "${CK_EXCLUDES[@]}" \
+        --jsonl
+else
+    # Get grep excludes
+    readarray -t GREP_EXCLUDES < <(build_grep_excludes)
+
+    grep -rn "${QUERY}" \
+        "${GREP_EXCLUDES[@]}" \
+        "${SEARCH_PATH}"
+fi
+```
+
+**Draft TTL Automation** (future):
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/check-draft-ttl.sh
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+CONFIG="${PROJECT_ROOT}/.loa.config.yaml"
+TTL_DAYS=$(yq e '.context_filtering.draft_ttl_days // 30' "${CONFIG}")
+
+# Find drafts older than TTL
+find loa-grimoire/ -name "draft-*.md" -mtime +${TTL_DAYS} | while read -r draft; do
+    echo "Draft older than ${TTL_DAYS} days: ${draft}"
+    echo "Consider archiving: mv \"${draft}\" loa-grimoire/archive/"
+done
+```
+
+**Key Design Properties**:
+
+1. **Multi-Layered Filtering**: Signal markers + archive zone + pattern excludes
+2. **Configurable**: All exclusions defined in `.loa.config.yaml`
+3. **Backward Compatible**: Filtering can be disabled entirely
+4. **Tool-Agnostic**: Works with both ck and grep
+5. **Extensible Watch Paths**: Users can add custom directories to drift detection
+
+**Impact on Existing Components**:
+
+- **Search Orchestrator**: Add exclude pattern building
+- **Drift Detection**: Use configured watch paths instead of hardcoded
+- **/ride Command**: Apply filtering to all searches
+- **Trajectory Logging**: Log which files were excluded (audit trail)
+
+---
+
+### 3.9 Command Namespace Protection Component
+
+**Location**: `.claude/scripts/validate-commands.sh`, `.claude/reserved-commands.yaml`
+**Protocol**: N/A (new feature)
+**PRD Reference**: FR-10 (P0 BLOCKER)
+
+**Responsibility**: Prevent Loa custom commands from conflicting with Claude Code built-in commands by validating command names and enforcing reserved namespace.
+
+**Design Overview**:
+
+The Command Namespace Protection system maintains a list of Claude Code reserved commands and validates all Loa commands against this list during setup and updates. Conflicts are automatically resolved by renaming with a `-loa` suffix.
+
+**Reserved Commands Registry**:
+
+```yaml
+# .claude/reserved-commands.yaml
+version: 1.0
+
+# Claude Code built-in commands (enshrined/protected)
+reserved:
+  - config              # Claude Code settings management
+  - help                # Claude Code help system
+  - clear               # Clear conversation history
+  - compact             # Compact context window
+  - cost                # Show API cost
+  - doctor              # System diagnostics
+  - init                # Initialize Claude Code project
+  - login               # Authentication
+  - logout              # Sign out
+  - memory              # Memory management
+  - model               # Model selection
+  - pr-comments         # Pull request review
+  - review              # Code review (built-in)
+  - terminal-setup      # Terminal configuration
+  - vim                 # Vim mode toggle
+
+  # Additional reserved commands (future-proofing)
+  - settings
+  - preferences
+  - debug
+  - test
+  - build
+  - deploy
+
+# Metadata
+last_updated: "2025-12-26"
+source: "Claude Code built-in commands"
+```
+
+**Validation Script**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/validate-commands.sh
+
+set -euo pipefail
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd)
+RESERVED_FILE="${PROJECT_ROOT}/.claude/reserved-commands.yaml"
+COMMANDS_DIR="${PROJECT_ROOT}/.claude/commands"
+
+# Load reserved command list
+readarray -t RESERVED < <(yq e '.reserved[]' "${RESERVED_FILE}")
+
+echo "Validating command namespace against Claude Code reserved commands..." >&2
+
+# Track conflicts
+CONFLICTS=()
+RENAMED=()
+
+# Check each command file
+for cmd_file in "${COMMANDS_DIR}"/*.md; do
+    if [[ ! -f "${cmd_file}" ]]; then
+        continue
+    fi
+
+    cmd_name=$(basename "${cmd_file}" .md)
+
+    # Check against reserved list
+    for reserved in "${RESERVED[@]}"; do
+        if [[ "${cmd_name}" == "${reserved}" ]]; then
+            CONFLICTS+=("${cmd_name}")
+
+            # Auto-rename with -loa suffix
+            new_name="${cmd_name}-loa"
+            new_file="${COMMANDS_DIR}/${new_name}.md"
+
+            echo "" >&2
+            echo "❌ CONFLICT: /${cmd_name} conflicts with Claude Code built-in" >&2
+            echo "   Renaming to: /${new_name}" >&2
+
+            # Rename file
+            mv "${cmd_file}" "${new_file}"
+
+            # Update internal references in frontmatter
+            sed -i "s/command: ${cmd_name}/command: ${new_name}/g" "${new_file}"
+
+            RENAMED+=("${cmd_name} → ${new_name}")
+            break
+        fi
+    done
+done
+
+# Report results
+echo "" >&2
+if [[ ${#CONFLICTS[@]} -eq 0 ]]; then
+    echo "✓ No command conflicts detected" >&2
+    exit 0
+else
+    echo "⚠️  ${#CONFLICTS[@]} conflict(s) resolved:" >&2
+    for rename in "${RENAMED[@]}"; do
+        echo "   - ${rename}" >&2
+    done
+
+    echo "" >&2
+    echo "Please update your workflows to use the new command names." >&2
+    exit 0  # Exit 0 after auto-fix (not a hard failure)
+fi
+```
+
+**Pre-flight Integration**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/preflight.sh (enhanced)
+
+# ... existing pre-flight checks ...
+
+# Command namespace validation (new)
+if [[ -f "${PROJECT_ROOT}/.claude/scripts/validate-commands.sh" ]]; then
+    echo "Validating command namespace..." >&2
+    "${PROJECT_ROOT}/.claude/scripts/validate-commands.sh"
+fi
+```
+
+**Setup Integration**:
+
+```markdown
+# .claude/commands/setup.md (enhanced)
+
+## Phase 3: Command Validation
+
+After synthesizing framework files:
+
+1. Validate command namespace:
+   ```bash
+   .claude/scripts/validate-commands.sh
+   ```
+
+2. If conflicts detected:
+   - Commands automatically renamed with `-loa` suffix
+   - User notified of changes
+   - Documentation updated with new names
+
+3. Log validation results to setup report
+```
+
+**Update Integration**:
+
+```bash
+#!/usr/bin/env bash
+# .claude/scripts/update.sh (enhanced)
+
+# ... existing update logic ...
+
+# Validate commands after framework update
+echo "Validating command namespace after update..." >&2
+"${PROJECT_ROOT}/.claude/scripts/validate-commands.sh"
+
+# If conflicts resolved, regenerate checksums
+if [[ $? -eq 0 ]]; then
+    "${PROJECT_ROOT}/.claude/scripts/generate-checksums.sh"
+fi
+```
+
+**Current Conflict Resolution**:
+
+```bash
+# Immediate action required:
+# Rename /config to /config-loa or /mcp-config
+
+mv .claude/commands/config.md .claude/commands/mcp-config.md
+
+# Update frontmatter
+sed -i 's/command: config/command: mcp-config/g' .claude/commands/mcp-config.md
+
+# Update documentation references
+grep -rl "/config" README.md INSTALLATION.md PROCESS.md | xargs sed -i 's/\/config/\/mcp-config/g'
+```
+
+**User Communication**:
+
+When conflicts are detected during setup:
+
+```
+❌ CONFLICT: /config conflicts with Claude Code built-in
+   Renaming to: /mcp-config
+
+⚠️  1 conflict(s) resolved:
+   - config → mcp-config
+
+Please update your workflows to use the new command names.
+
+To access Claude Code settings, use the built-in /config command.
+To configure Loa MCP servers, use /mcp-config.
+```
+
+**CI Integration**:
+
+```yaml
+# .github/workflows/validate-commands.yml
+name: Validate Command Namespace
+
+on: [push, pull_request]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Validate command namespace
+        run: |
+          .claude/scripts/validate-commands.sh
+
+          # Check if any conflicts exist
+          if [[ $(find .claude/commands/ -name "*-loa.md" | wc -l) -gt 0 ]]; then
+            echo "::error::Command conflicts detected and auto-fixed"
+            echo "::warning::Please review renamed commands"
+            exit 1
+          fi
+```
+
+**Key Design Properties**:
+
+1. **P0 Blocker Prevention**: Validation runs during setup and updates (cannot be skipped)
+2. **Auto-Resolution**: Conflicts automatically renamed with `-loa` suffix
+3. **Non-Breaking**: Existing workflows updated but not broken
+4. **Extensible Registry**: Reserved list can grow as Claude Code adds features
+5. **CI Enforcement**: Pull requests fail if conflicts detected
+6. **Clear Communication**: Users informed of renames with actionable guidance
+
+**Impact on Existing Components**:
+
+- **Setup Command**: Add namespace validation phase
+- **Update Command**: Re-validate after framework updates
+- **Pre-flight Check**: Include validation in pre-flight checks
+- **CI/CD**: Add validation job to GitHub Actions
+- **Documentation**: Update all references from `/config` → `/mcp-config`
+
+**Backward Compatibility**:
+
+- Existing `/config` command automatically renamed to `/mcp-config`
+- Users with old workflows will see clear error messages pointing to new names
+- Reserved list additions trigger automatic renames (non-breaking updates)
+
+---
+
 ## 4. Data Architecture
 
 ### 4.1 ck Index Structure
@@ -1446,6 +2211,14 @@ ck --index /absolute/path/to/project \
 │ - All search operations logged to immutable JSONL               │
 │ - reviewing-code agent verifies reasoning chains                │
 │ - Compressed archives prevent tampering detection              │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ Layer 5: Command Namespace Protection (FR-10)                   │
+│ - Reserved command list prevents Claude Code conflicts          │
+│ - Pre-flight validation during setup and updates               │
+│ - Auto-rename conflicting commands with -loa suffix            │
+│ - CI enforcement prevents introduction of new conflicts        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1985,20 +2758,32 @@ ck --merge-index
    ├─ ck ○ (optional - install with: cargo install ck-search)
    └─ bd ○ (optional - install from: github.com/steveyegge/beads)
    ↓
-4. If ck installed:
+4. Validate command namespace (FR-10):
+   - Run: .claude/scripts/validate-commands.sh
+   - Check for conflicts with Claude Code reserved commands
+   - Auto-rename any conflicts (e.g., /config → /mcp-config)
+   - Display warnings if renames occurred
+   ↓
+5. If ck installed:
    - Display: "✓ ck installed: 0.7.2"
    - Trigger background index: ck --index . --quiet &
    - Display: "Note: First search may be slower while index builds"
    ↓
-5. If ck NOT installed:
+6. If ck NOT installed:
    - Display: "○ ck not installed (optional)"
    - Display: "For enhanced semantic search: cargo install ck-search"
    - Display: "All commands work normally using grep fallback"
    ↓
-6. Create .loa-setup-complete marker
+7. Initialize configuration files (FR-8, FR-9):
+   - Create .claude/workflow-chain.yaml (if missing)
+   - Initialize drift_detection.watch_paths in .loa.config.yaml
+   - Initialize context_filtering defaults in .loa.config.yaml
    ↓
-7. Display setup summary:
+8. Create .loa-setup-complete marker
+   ↓
+9. Display setup summary:
    "Setup complete with: [ck, beads, full suite]"
+   [If command renames occurred, display list of changes]
 ```
 
 **Installation Script**: `.claude/scripts/install-ck.sh` (referenced in INSTALLATION.md)
@@ -2775,7 +3560,9 @@ Agent              Orchestrator      Pre-Flight      ck/grep         Trajectory
 
 ## Conclusion
 
-This Software Design Document provides a comprehensive architecture for integrating ck semantic search into the Loa framework as an invisible, optional enhancement. The design enforces:
+This Software Design Document provides a comprehensive architecture for integrating ck semantic search into the Loa framework as an invisible, optional enhancement, plus three critical workflow improvements from GitHub issues.
+
+**Core Integration Features** (ck semantic search):
 
 1. **Truth Hierarchy**: CODE > ck INDEX > NOTES.md > PRD/SDD
 2. **Invisible Enhancement**: Zero user-facing changes
@@ -2783,16 +3570,46 @@ This Software Design Document provides a comprehensive architecture for integrat
 4. **Performance Targets**: <500ms search, 80-90% cache hit, ≥0.95 grounding ratio
 5. **Graceful Degradation**: Full functionality with grep fallback
 
+**New Workflow Features** (GitHub Issues #9, #10, #11):
+
+1. **Agent Chaining (FR-8)**: Automatic next-step suggestions after phase completion
+   - Declarative workflow chain in YAML
+   - Conditional routing based on approval/feedback
+   - Non-blocking, user can decline
+   - Maintains workflow momentum
+
+2. **Context Filtering (FR-9)**: Prevention of search result pollution
+   - Signal markers (high/medium/low) for document filtering
+   - Configurable watch paths for drift detection
+   - Archive zone exclusion
+   - Default exclude patterns for session artifacts
+
+3. **Command Namespace Protection (FR-10 - P0 BLOCKER)**: Prevents Claude Code conflicts
+   - Reserved command registry
+   - Pre-flight validation during setup/update
+   - Auto-rename conflicts with -loa suffix
+   - Current conflict: /config → /mcp-config
+
 **Key Architectural Decisions**:
 - Direct CLI invocation (v1.0) for simplicity, MCP migration (v2.0) for integration
 - Archive trajectory logs to compressed storage for full audit trail
 - Minimal Beads integration (Ghost/Shadow tracking only)
 - Single repository scope (v1.0), multi-repo in future
+- Workflow chain as opt-in enhancement (suggestions, not forced)
+- Context filtering configurable and backward compatible
+- Command namespace validation mandatory (P0)
+
+**Implementation Priority**:
+1. **P0 (Immediate)**: Command namespace protection - resolve /config conflict
+2. **P0**: Core ck integration (Installation, Pre-Flight, /ride)
+3. **P1**: Agent chaining for workflow momentum
+4. **P1**: Context filtering for search quality
 
 **Next Steps**:
-1. Review SDD with THJ team
-2. Proceed to `/sprint-plan` for task breakdown
-3. Begin implementation in Sprint 1 (Installation & Pre-Flight)
+1. **Immediate**: Rename /config to /mcp-config (FR-10)
+2. Review SDD with THJ team
+3. Proceed to `/sprint-plan` for task breakdown
+4. Begin implementation in Sprint 1 (Installation & Pre-Flight)
 
 **Document Status**: Ready for sprint planning phase.
 
