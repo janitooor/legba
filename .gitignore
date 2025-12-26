@@ -68,11 +68,12 @@ loa-grimoire/deployment/SERVER-REALITY-AUDIT.md
 # .beads/
 #
 # Loa process artifacts (loa-grimoire/)
-loa-grimoire/prd.md
-loa-grimoire/sdd.md
-loa-grimoire/sprint.md
-loa-grimoire/a2a/
-loa-grimoire/deployment/
+# Uncomment to exclude from version control:
+# loa-grimoire/prd.md
+# loa-grimoire/sdd.md
+# loa-grimoire/sprint.md
+# loa-grimoire/a2a/
+# loa-grimoire/deployment/
 #
 # Analytics (usage tracking)
 # By default, analytics are tracked but may contain developer-specific info
