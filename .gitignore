@@ -49,6 +49,10 @@ temp/
 # Each developer runs setup independently, so this should not be shared
 .loa-setup-complete
 
+# User context files (discovery inputs, uploaded docs, extracted content)
+# These are user-specific inputs that should never be committed
+loa-grimoire/context/
+
 # ck semantic search state (embeddings cache, indexes)
 # Large machine-specific files that rebuild automatically
 .ck/
