@@ -336,6 +336,36 @@ The `.constructs-meta.json` file tracks installation state:
 }
 ```
 
+## Version Control (Automatic Gitignore)
+
+**Important**: Installed constructs contain user-specific licenses and copyrighted content that should NOT be committed to version control.
+
+The loader automatically adds `.claude/constructs/` to `.gitignore` when:
+- Installing skills (`validate`)
+- Installing packs (`validate-pack`)
+- Running `ensure-gitignore` command explicitly
+
+**Why constructs are gitignored:**
+1. **License watermarks**: Each license contains user-specific identifiers
+2. **Copyrighted content**: Skills are licensed per-user, not per-repo
+3. **Team workflows**: Each developer should install with their own credentials
+
+**Manual check:**
+```bash
+# Verify gitignore is configured
+constructs-loader.sh ensure-gitignore
+
+# Check if already gitignored
+git check-ignore -v .claude/constructs/
+```
+
+**If accidentally committed:**
+```bash
+# Remove from tracking but keep local files
+git rm -r --cached .claude/constructs/
+git commit -m "fix: remove licensed constructs from tracking"
+```
+
 ## Security Considerations
 
 1. **Signature Verification**: All licenses use RS256 JWT signatures
@@ -343,6 +373,7 @@ The `.constructs-meta.json` file tracks installation state:
 3. **No Secrets in Code**: API keys never stored locally
 4. **Offline Grace**: Prevents lock-out during network issues
 5. **Reserved Names**: Core skills cannot be overridden by registry
+6. **Auto-Gitignore**: Prevents accidental commit of licensed content
 
 ## Troubleshooting
 

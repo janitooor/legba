@@ -865,6 +865,9 @@ do_loadable() {
 do_validate() {
     local skill_dir="$1"
 
+    # Ensure constructs directory is gitignored
+    ensure_constructs_gitignored
+
     # Validate skill
     local exit_code=0
     validate_skill "$skill_dir" || exit_code=$?
@@ -902,6 +905,9 @@ do_validate() {
 # Validate a pack's license and update registry meta
 do_validate_pack() {
     local pack_dir="$1"
+
+    # Ensure constructs directory is gitignored
+    ensure_constructs_gitignored
 
     # First validate the manifest is valid JSON
     local manifest_file="$pack_dir/manifest.json"
@@ -1236,6 +1242,7 @@ Commands:
     list-pack-skills <dir>  List skills in a pack
     get-pack-version <dir>  Get pack version from manifest
     check-updates           Check for available updates
+    ensure-gitignore        Add .claude/constructs/ to .gitignore if missing
 
 Exit Codes (validate/preload):
     0 = valid
@@ -1251,6 +1258,8 @@ Environment Variables:
     LOA_OFFLINE        Set to 1 for offline-only mode
     NO_COLOR           Disable colored output
 
+Note: Installing skills/packs automatically adds .claude/constructs/ to .gitignore
+
 Examples:
     constructs-loader.sh list
     constructs-loader.sh list-packs
@@ -1258,6 +1267,7 @@ Examples:
     constructs-loader.sh validate .claude/constructs/skills/vendor/skill
     constructs-loader.sh validate-pack .claude/constructs/packs/my-pack
     constructs-loader.sh preload .claude/constructs/skills/vendor/skill
+    constructs-loader.sh ensure-gitignore
 EOF
 }
 
@@ -1301,6 +1311,9 @@ main() {
             ;;
         check-updates)
             do_check_updates
+            ;;
+        ensure-gitignore)
+            ensure_constructs_gitignored
             ;;
         -h|--help|help)
             show_usage

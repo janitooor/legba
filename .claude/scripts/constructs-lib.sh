@@ -488,6 +488,101 @@ is_update_check_on_setup_enabled() {
 }
 
 # =============================================================================
+# Gitignore Management
+# =============================================================================
+
+# Ensure .claude/constructs/ is in .gitignore
+# Called automatically when installing skills/packs
+# Returns: 0 on success, 1 on failure
+ensure_constructs_gitignored() {
+    local gitignore_file=".gitignore"
+    local constructs_pattern=".claude/constructs/"
+
+    # Check if we're in a git repository
+    if [[ ! -d ".git" ]]; then
+        # Not a git repo, nothing to do
+        return 0
+    fi
+
+    # Check if .gitignore exists
+    if [[ ! -f "$gitignore_file" ]]; then
+        # Create .gitignore with constructs exclusion
+        cat > "$gitignore_file" << 'EOF'
+# =============================================================================
+# LOA CONSTRUCTS (licensed skills, user-specific)
+# =============================================================================
+# Constructs packs and skills are downloaded per-user with individual licenses.
+# These should NOT be committed to version control:
+# - Licenses are user-specific (contain watermarks, user_id)
+# - Content is copyrighted and licensed per-user
+# - Users should install via /skill-pack-install command
+.claude/constructs/
+EOF
+        print_success "Created .gitignore with constructs exclusion"
+        return 0
+    fi
+
+    # Check if already in .gitignore
+    if grep -q "^\.claude/constructs/" "$gitignore_file" 2>/dev/null; then
+        # Already present
+        return 0
+    fi
+
+    # Check for partial match (e.g., commented out or different path)
+    if grep -q "claude/constructs" "$gitignore_file" 2>/dev/null; then
+        # Some variant exists, don't duplicate
+        return 0
+    fi
+
+    # Add to .gitignore
+    cat >> "$gitignore_file" << 'EOF'
+
+# =============================================================================
+# LOA CONSTRUCTS (licensed skills, user-specific)
+# =============================================================================
+# Constructs packs and skills are downloaded per-user with individual licenses.
+# These should NOT be committed to version control:
+# - Licenses are user-specific (contain watermarks, user_id)
+# - Content is copyrighted and licensed per-user
+# - Users should install via /skill-pack-install command
+.claude/constructs/
+EOF
+
+    print_success "Added .claude/constructs/ to .gitignore"
+    return 0
+}
+
+# Check if constructs directory is properly gitignored
+# Returns: 0 if gitignored, 1 if not
+is_constructs_gitignored() {
+    local gitignore_file=".gitignore"
+
+    # Not a git repo - considered "safe"
+    if [[ ! -d ".git" ]]; then
+        return 0
+    fi
+
+    # No .gitignore - not gitignored
+    if [[ ! -f "$gitignore_file" ]]; then
+        return 1
+    fi
+
+    # Check for the pattern
+    if grep -q "^\.claude/constructs/" "$gitignore_file" 2>/dev/null; then
+        return 0
+    fi
+
+    # Check using git check-ignore (more accurate)
+    if command_exists git; then
+        if git check-ignore -q ".claude/constructs/" 2>/dev/null; then
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+# =============================================================================
 # Version Comparison (Sprint 5)
 # =============================================================================
 
