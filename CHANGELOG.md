@@ -5,6 +5,93 @@ All notable changes to Loa will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-01-12
+
+### Why This Release
+
+This release introduces the **Grimoires Restructure** - a reorganization of the grimoire directory structure for better separation of private project state and public shareable content. The new `grimoires/` directory serves as the home for all grimoires, with `grimoires/loa/` for private state and `grimoires/pub/` for public documents.
+
+### Added
+
+- **Grimoires Directory Structure**
+  | Path | Git Status | Purpose |
+  |------|------------|---------|
+  | `grimoires/loa/` | Ignored | Private project state (PRD, SDD, notes, trajectories) |
+  | `grimoires/pub/` | Tracked | Public documents (research, audits, shareable artifacts) |
+
+- **Migration Tool** (`.claude/scripts/migrate-grimoires.sh`)
+  ```bash
+  migrate-grimoires.sh check      # Check if migration needed
+  migrate-grimoires.sh plan       # Preview changes (dry-run)
+  migrate-grimoires.sh run        # Execute migration
+  migrate-grimoires.sh rollback   # Revert using backup
+  migrate-grimoires.sh status     # Show current state
+  ```
+  - Backup-before-migrate pattern for safety
+  - JSON output support for automation (`--json`)
+  - Force mode for scripted usage (`--force`)
+
+- **Public Grimoire Structure** (`grimoires/pub/`)
+  ```
+  grimoires/pub/
+  ├── research/     # Research and analysis documents
+  ├── docs/         # Shareable documentation
+  ├── artifacts/    # Public build artifacts
+  └── audits/       # Security audit reports
+  ```
+
+- **CI Template Protection**: Extended to protect `grimoires/pub/` from project-specific content in template repository
+
+### Changed
+
+- **Path Migration**: 134+ files updated from `loa-grimoire` to `grimoires/loa`
+  - All scripts in `.claude/scripts/`
+  - All skills in `.claude/skills/`
+  - All commands in `.claude/commands/`
+  - All protocols in `.claude/protocols/`
+  - Configuration files (`.gitignore`, `.loa-version.json`, `.loa.config.yaml`)
+  - Documentation (README.md, CLAUDE.md, INSTALLATION.md, PROCESS.md)
+
+- **Update Script**: Now checks for grimoire migration after framework updates (Stage 11)
+
+### Security
+
+- Migration tool security audit: **APPROVED**
+  - No command injection vulnerabilities (all paths hardcoded)
+  - Safe shell scripting (`set -euo pipefail`)
+  - Proper backup/rollback capability
+  - Audit report: `grimoires/pub/audits/grimoires-restructure-audit.md`
+
+### Migration Guide
+
+Existing projects using `loa-grimoire/` will be prompted to migrate:
+
+```bash
+# Check if migration needed
+.claude/scripts/migrate-grimoires.sh check
+
+# Preview changes
+.claude/scripts/migrate-grimoires.sh plan
+
+# Execute migration (creates backup automatically)
+.claude/scripts/migrate-grimoires.sh run
+
+# If issues occur, rollback
+.claude/scripts/migrate-grimoires.sh rollback
+```
+
+The migration tool will:
+1. Create `grimoires/` directory structure
+2. Move content from `loa-grimoire/` to `grimoires/loa/`
+3. Update `.loa.config.yaml` and `.gitignore` references
+4. Create `grimoires/pub/` with README files
+
+### Breaking Changes
+
+**None** - The migration tool provides a smooth upgrade path. Existing `loa-grimoire/` paths continue to work until manually migrated.
+
+---
+
 ## [0.11.0] - 2026-01-12
 
 ### Why This Release
@@ -923,6 +1010,7 @@ loa-grimoire/           # Loa process artifacts
 └── deployment/         # Production infrastructure docs
 ```
 
+[0.12.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.12.0
 [0.11.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.11.0
 [0.10.1]: https://github.com/0xHoneyJar/loa/releases/tag/v0.10.1
 [0.10.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.10.0
