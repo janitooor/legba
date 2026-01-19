@@ -147,36 +147,37 @@ call_api() {
   local content="$3"
   local timeout="$4"
 
-  local api_url="https://api.openai.com/v1/chat/completions"
-
-  # Escape for JSON using jq
-  local escaped_system escaped_content
-  escaped_system=$(printf '%s' "$system_prompt" | jq -Rs .)
-  escaped_content=$(printf '%s' "$content" | jq -Rs .)
-
+  local api_url
   local payload
 
-  # Codex models use single-message format (no system prompt)
+  # Codex models use /v1/completions endpoint (not chat)
   if [[ "$model" == *"codex"* ]]; then
-    # For codex: combine system prompt and content into single user message
-    local combined_content
-    combined_content=$(printf '%s\n\n---\n\n## CONTENT TO REVIEW:\n\n%s' "$system_prompt" "$content")
-    local escaped_combined
-    escaped_combined=$(printf '%s' "$combined_content" | jq -Rs .)
+    api_url="https://api.openai.com/v1/completions"
+
+    # For codex: combine prompt and content, use completions format
+    local combined_prompt
+    combined_prompt=$(printf '%s\n\n---\n\n## CONTENT TO REVIEW:\n\n%s\n\n---\n\nRespond with valid JSON only:' "$system_prompt" "$content")
+    local escaped_prompt
+    escaped_prompt=$(printf '%s' "$combined_prompt" | jq -Rs .)
 
     payload=$(cat <<EOF
 {
   "model": "${model}",
-  "messages": [
-    {"role": "user", "content": ${escaped_combined}}
-  ],
+  "prompt": ${escaped_prompt},
   "temperature": 0.3,
-  "response_format": {"type": "json_object"}
+  "max_tokens": 4096
 }
 EOF
 )
   else
-    # Standard chat models: use system + user messages
+    # Standard chat models use /v1/chat/completions
+    api_url="https://api.openai.com/v1/chat/completions"
+
+    # Escape for JSON using jq
+    local escaped_system escaped_content
+    escaped_system=$(printf '%s' "$system_prompt" | jq -Rs .)
+    escaped_content=$(printf '%s' "$content" | jq -Rs .)
+
     payload=$(cat <<EOF
 {
   "model": "${model}",
@@ -265,15 +266,19 @@ EOF
     esac
   done
 
-  # Extract content from response
+  # Extract content from response (chat vs completions format)
   local content_response
-  content_response=$(echo "$response" | jq -r '.choices[0].message.content // empty')
+  # Try chat format first, then completions format
+  content_response=$(echo "$response" | jq -r '.choices[0].message.content // .choices[0].text // empty')
 
   if [[ -z "$content_response" ]]; then
     error "No content in API response"
     log "Full response: $response"
     exit 5
   fi
+
+  # Completions API may return text with leading/trailing whitespace
+  content_response=$(echo "$content_response" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
   # Validate JSON response
   if ! echo "$content_response" | jq empty 2>/dev/null; then

@@ -639,10 +639,10 @@ Loa uses GPT 5.2 for cross-model code and document review. If you encounter API 
 
 ### Models Used
 
-| Model | Purpose | API Format |
-|-------|---------|------------|
-| `gpt-5.2` | Document review (PRD, SDD, Sprint) | Chat completions (system + user) |
-| `gpt-5.2-codex` | Code review | Single message (no system prompt) |
+| Model | Purpose | API Endpoint |
+|-------|---------|--------------|
+| `gpt-5.2` | Document review (PRD, SDD, Sprint) | `/v1/chat/completions` (system + user messages) |
+| `gpt-5.2-codex` | Code review | `/v1/completions` (prompt field, no messages) |
 
 ### On API Errors
 
