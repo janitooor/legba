@@ -379,10 +379,10 @@ gpt_review:
   timeout_seconds: 300            # Per-request timeout
   max_retries: 3                  # Retry on transient failures
 
-  # Model selection
+  # Model selection (must be chat-compatible models)
   models:
-    documents: "gpt-5.2-pro"      # For PRD, SDD, Sprint reviews (high reasoning)
-    code: "gpt-5.2-codex"         # For code reviews (code-optimized)
+    documents: "gpt-5.2"  # For PRD, SDD, Sprint reviews
+    code: "gpt-5.2-codex"               # For code reviews (code-optimized)
 
   # Per-phase toggles - enable/disable GPT review for specific phases
   phases:

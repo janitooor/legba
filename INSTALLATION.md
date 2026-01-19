@@ -187,8 +187,8 @@ export OPENAI_API_KEY="sk-your-api-key-here"
 gpt_review:
   enabled: true                    # Master toggle
   models:
-    documents: "gpt-5.2-pro"       # PRD, SDD, Sprint reviews
-    code: "gpt-5.2-codex"          # Code reviews
+    documents: "gpt-5.2"       # PRD, SDD, Sprint reviews
+    code: "gpt-5.2-codex"      # Code reviews
   phases:
     prd: true                      # Review PRD
     sdd: true                      # Review SDD

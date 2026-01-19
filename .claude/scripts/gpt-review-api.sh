@@ -27,11 +27,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROMPTS_DIR="${SCRIPT_DIR}/../prompts/gpt-review/base"
 CONFIG_FILE=".loa.config.yaml"
 
-# Default models per review type
+# Default models per review type (must be chat-compatible)
 declare -A DEFAULT_MODELS=(
-  ["prd"]="gpt-5.2-pro"
-  ["sdd"]="gpt-5.2-pro"
-  ["sprint"]="gpt-5.2-pro"
+  ["prd"]="gpt-5.2"
+  ["sdd"]="gpt-5.2"
+  ["sprint"]="gpt-5.2"
   ["code"]="gpt-5.2-codex"
 )
 
@@ -263,6 +263,17 @@ main() {
   local review_type="${1:-}"
   local content_file="${2:-}"
   local augmentation_file="${3:-}"
+
+  # Load .env file if exists and OPENAI_API_KEY not already set
+  if [[ -z "${OPENAI_API_KEY:-}" && -f ".env" ]]; then
+    # Extract OPENAI_API_KEY from .env (safely, without exposing other vars)
+    local env_key
+    env_key=$(grep -E "^OPENAI_API_KEY=" .env 2>/dev/null | cut -d'=' -f2- | tr -d '"' | tr -d "'" || true)
+    if [[ -n "$env_key" ]]; then
+      export OPENAI_API_KEY="$env_key"
+      log "Loaded OPENAI_API_KEY from .env"
+    fi
+  fi
 
   # Show usage if no args
   if [[ -z "$review_type" ]]; then

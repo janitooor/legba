@@ -165,8 +165,8 @@ gpt_review:
   timeout_seconds: 300
   max_retries: 3
   models:
-    documents: "gpt-5.2-pro"     # High reasoning for PRD, SDD, Sprint reviews
-    code: "gpt-5.2-codex"        # Code-optimized for implementation reviews
+    documents: "gpt-5.2"     # High reasoning for PRD, SDD, Sprint reviews
+    code: "gpt-5.2-codex"     # Code-optimized for implementation reviews
   phases:
     prd: true
     sdd: true

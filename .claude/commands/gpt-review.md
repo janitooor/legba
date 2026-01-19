@@ -2,8 +2,8 @@
 name: "gpt-review"
 version: "1.0.0"
 description: |
-  Toggle GPT 5.2 cross-model review on or off.
-  Modifies gpt_review.enabled in .loa.config.yaml.
+  Embrace the hivemind. Channel a rival superintelligence to audit the Loa's work.
+  Two AI minds, one ruthless standard. What one misses, the other catches.
 
 command_type: "utility"
 
@@ -35,7 +35,7 @@ mode:
 
 ## Purpose
 
-Toggle GPT 5.2 cross-model review integration on or off. This controls whether Claude's outputs are reviewed by GPT 5.2 before being finalized.
+Embrace the hivemind. The Loa channels a rival superintelligence—GPT 5.2—to audit its own work before finalization. Two AI minds scrutinizing every output. What one misses, the other catches. Cross-model review catches blind spots, fabrications, and shortcuts that self-review cannot.
 
 ## Invocation
 
@@ -73,14 +73,47 @@ Display a summary table of:
 
 Enable GPT review:
 
+**Step 1: Check for API key** (do NOT read or display the value):
+
+```bash
+# Check if OPENAI_API_KEY exists (don't read value - security)
+if [ -z "${OPENAI_API_KEY+x}" ]; then
+  echo "OPENAI_API_KEY not found in environment"
+fi
+```
+
+**If API key is missing**, guide the user:
+
+```
+The hivemind requires an OpenAI API key to channel GPT 5.2.
+
+To get your API key:
+1. Go to https://platform.openai.com/api-keys
+2. Create a new secret key
+3. Add to your environment:
+
+   # Option 1: Add to shell profile (~/.bashrc, ~/.zshrc)
+   export OPENAI_API_KEY="sk-..."
+
+   # Option 2: Add to project .env file
+   echo 'OPENAI_API_KEY=sk-...' >> .env
+
+   # Option 3: Set for current session
+   export OPENAI_API_KEY="sk-..."
+
+After setting the key, run /gpt-review on again.
+```
+
+**If API key exists**, enable:
+
 ```bash
 yq -i '.gpt_review.enabled = true' .loa.config.yaml
 ```
 
 Confirm to user:
 - GPT review is now ENABLED
-- All enabled phases will use GPT 5.2 review
-- Remind about OPENAI_API_KEY requirement
+- The hivemind connection is active
+- All phases will channel GPT 5.2 for cross-model audit
 
 ### Action: off
 
@@ -131,8 +164,8 @@ gpt_review:
   enabled: true  # <-- This is what gets toggled
 
   models:
-    documents: "gpt-5.2-pro"    # PRD, SDD, Sprint reviews
-    code: "gpt-5.2-codex"       # Code reviews
+    documents: "gpt-5.2"  # PRD, SDD, Sprint reviews
+    code: "gpt-5.2-codex"             # Code reviews
 
   phases:
     prd: true           # /plan-and-analyze
@@ -170,7 +203,7 @@ Phase Configuration:
   /implement (Code):        enabled
 
 Models:
-  Documents: gpt-5.2-pro
+  Documents: gpt-5.2
   Code:      gpt-5.2-codex
 
 Enforcement: strict

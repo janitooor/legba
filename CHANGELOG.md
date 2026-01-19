@@ -15,7 +15,7 @@ This release adds GPT 5.2 cross-model review integration, providing an independe
 
 - **GPT 5.2 Cross-Model Review**
   - Internal review of all document phases (PRD, SDD, Sprint, Code)
-  - Uses `gpt-5.2-pro` for document reviews (high reasoning)
+  - Uses `gpt-5.2` for document reviews (high reasoning)
   - Uses `gpt-5.2-codex` for code reviews (code-optimized)
   - Automatic fix-and-resubmit when CHANGES_REQUIRED
   - User escalation only for DECISION_NEEDED (rare)

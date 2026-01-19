@@ -235,7 +235,7 @@ GPT 5.2 provides independent cross-model review of Loa outputs to catch issues t
 - If DECISION_NEEDED: User is asked the specific question (rare)
 
 **Models Used:**
-- `gpt-5.2-pro` - Document reviews (PRD, SDD, Sprint)
+- `gpt-5.2` - Document reviews (PRD, SDD, Sprint)
 - `gpt-5.2-codex` - Code reviews
 
 **Configuration** (`.loa.config.yaml`):
@@ -247,8 +247,8 @@ gpt_review:
   max_retries: 3                   # Retry on transient failures
 
   models:
-    documents: "gpt-5.2-pro"       # PRD, SDD, Sprint review
-    code: "gpt-5.2-codex"          # Code review
+    documents: "gpt-5.2"       # PRD, SDD, Sprint review
+    code: "gpt-5.2-codex"      # Code review
 
   phases:
     prd: true                      # Review PRD before writing

@@ -498,7 +498,7 @@ Log each iteration to trajectory:
   "verdict": "CHANGES_REQUIRED",
   "issues_count": 2,
   "recommendations_count": 1,
-  "model": "gpt-5.2-pro"
+  "model": "gpt-5.2"
 }
 ```
 
@@ -512,7 +512,7 @@ Include at the end of the PRD:
 
 **GPT Review Status:** APPROVED
 **GPT Review Iterations:** 2
-**GPT Review Model:** gpt-5.2-pro
+**GPT Review Model:** gpt-5.2
 **Issues Addressed:**
 - [Issue 1] → [How resolved]
 
