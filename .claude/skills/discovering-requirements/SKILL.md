@@ -453,17 +453,24 @@ If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
 
    Save to `/tmp/gpt-prd-augmentation.md`
 
-### Step 2: Call GPT Review
+### Step 2: GPT Review Loop with Iteration Context
 
+**Initialize:**
 ```bash
-.claude/scripts/gpt-review-api.sh prd /tmp/prd-draft.md /tmp/gpt-prd-augmentation.md
+iteration=1
 ```
 
-Parse the JSON response and extract:
-- `verdict`: APPROVED | CHANGES_REQUIRED | DECISION_NEEDED
-- `issues`: Array of blocking issues (missing requirements, contradictions, ambiguities)
-- `recommendations`: Array of improvements
-- `question`: Only present if DECISION_NEEDED
+**First Review (iteration 1):**
+```bash
+.claude/scripts/gpt-review-api.sh prd /tmp/prd-draft.md \
+  --augmentation /tmp/gpt-prd-augmentation.md \
+  --iteration 1 > /tmp/gpt-response-1.json
+```
+
+**Parse Response:**
+- `verdict`: APPROVED | CHANGES_REQUIRED
+- `problems`: Array of contradictions/impossible requirements (not style issues)
+- `summary`: One sentence assessment
 
 ### Step 3: Handle Verdict
 
@@ -473,18 +480,26 @@ Parse the JSON response and extract:
 - Include GPT review metadata in document
 
 **If CHANGES_REQUIRED:**
-- Read all issues and recommendations
-- Revise PRD draft to address each issue
-- Claude has discretion on HOW to address recommendations
-- Re-save draft and call GPT review again (return to Step 2)
-- **NO user input needed** - Claude fixes automatically
-- Loop until APPROVED
+1. Read the problems from the response
+2. Fix ONLY the problems identified (not style, not formatting)
+3. Re-save draft to `/tmp/prd-draft.md`
+4. Increment iteration: `iteration=$((iteration + 1))`
+5. Call GPT review WITH previous context:
 
-**If DECISION_NEEDED:**
-- Extract the `question` field from response
-- Ask user the specific question
-- After user responds, incorporate their guidance
-- Re-review if needed
+```bash
+.claude/scripts/gpt-review-api.sh prd /tmp/prd-draft.md \
+  --augmentation /tmp/gpt-prd-augmentation.md \
+  --iteration $iteration \
+  --previous /tmp/gpt-response-$((iteration - 1)).json > /tmp/gpt-response-$iteration.json
+```
+
+6. GPT now receives:
+   - The updated PRD draft
+   - Its previous findings
+   - Instruction to ONLY check if previous problems were fixed
+7. Loop until APPROVED or max_iterations reached (auto-approves after 3)
+
+**Key: Each re-review gives GPT full context of what it found before**
 
 ### Step 4: Track Iterations
 
@@ -494,10 +509,10 @@ Log each iteration to trajectory:
   "timestamp": "...",
   "agent": "discovering-requirements",
   "action": "gpt_review",
-  "iteration": 1,
-  "verdict": "CHANGES_REQUIRED",
-  "issues_count": 2,
-  "recommendations_count": 1,
+  "iteration": 2,
+  "verdict": "APPROVED",
+  "problems_count": 0,
+  "previous_problems_fixed": true,
   "model": "gpt-5.2"
 }
 ```
@@ -513,10 +528,7 @@ Include at the end of the PRD:
 **GPT Review Status:** APPROVED
 **GPT Review Iterations:** 2
 **GPT Review Model:** gpt-5.2
-**Issues Addressed:**
-- [Issue 1] → [How resolved]
-
-**Recommendations Addressed:**
-- [Recommendation 1] → [How addressed]
+**Problems Fixed:**
+- [Problem 1] → [How fixed]
 ```
 </gpt_review_phase>
