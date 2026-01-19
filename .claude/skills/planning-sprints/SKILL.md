@@ -356,7 +356,7 @@ yq eval '.gpt_review.enabled // false' .loa.config.yaml
 yq eval '.gpt_review.phases.sprint // false' .loa.config.yaml
 ```
 
-If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
+If both are `true`, proceed with GPT review. **Do NOT pre-check for OPENAI_API_KEY** - the script loads it from `.env` automatically. Just run the script; it will error with exit code 4 only if the key is truly missing.
 
 ### Step 1: Prepare Review Context
 
