@@ -20,10 +20,12 @@ zones:
 
 These requirements are NON-NEGOTIABLE regardless of context length:
 
-1. **GPT REVIEW AFTER EVERY TASK** (if enabled in config)
-   - A task is NOT complete until GPT review passes
-   - Run `.claude/scripts/gpt-review-api.sh` after EACH task
-   - Do NOT move to the next task until current task is GPT-approved
+1. **GPT REVIEW AFTER EVERY CODE CHANGE** (if enabled in config)
+   - ANY code written or modified MUST be GPT reviewed
+   - This includes: tasks, quick fixes, small updates, refactors, EVERYTHING
+   - No exceptions for "small changes" or "quick updates"
+   - Run `.claude/scripts/gpt-review-api.sh code` after EACH code change
+   - WHY: Claude fabricates things (metrics, test results, logic). GPT catches this.
 
 2. **CHECK FEEDBACK BEFORE NEW WORK**
    - Always check audit feedback first
@@ -33,6 +35,12 @@ These requirements are NON-NEGOTIABLE regardless of context length:
    - No exceptions
 
 **If you find yourself about to skip any of these: STOP and do them.**
+
+```
+REMEMBER: GPT review exists because Claude fabricates data.
+Real example: Claude faked win rate metrics for a trading AI.
+GPT review caught it. THIS IS WHY WE NEVER SKIP.
+```
 </critical_requirements>
 
 <objective>
@@ -345,14 +353,22 @@ The user only runs `/implement sprint-1`. All bd commands are invisible.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  TASK COMPLETION CHECKLIST (all must be true):          │
+│  BEFORE MOVING ON FROM ANY CODE CHANGE:                 │
 │                                                         │
-│  □ Code implemented                                     │
-│  □ Tests written and passing                            │
+│  □ Code implemented/modified                            │
+│  □ Tests written and passing (if applicable)            │
 │  □ GPT review completed (if enabled)                    │
 │  □ GPT verdict = APPROVED                               │
 │                                                         │
-│  ⚠️  DO NOT PROCEED TO NEXT TASK UNTIL ALL CHECKED     │
+│  This applies to:                                       │
+│  - Full task implementations                            │
+│  - Quick fixes                                          │
+│  - Small updates                                        │
+│  - Refactors                                            │
+│  - Bug fixes                                            │
+│  - ANY code change whatsoever                           │
+│                                                         │
+│  ⚠️  WROTE CODE? RUN GPT REVIEW. NO EXCEPTIONS.        │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -368,20 +384,26 @@ The user only runs `/implement sprint-1`. All bd commands are invisible.
 - DRY principles
 - Consistent formatting
 
-## GPT Code Review - Per Task (MANDATORY WHEN ENABLED)
+## GPT Code Review - EVERY CODE CHANGE (MANDATORY WHEN ENABLED)
 
 ```
 ╔══════════════════════════════════════════════════════════════╗
 ║  ⚠️  THIS STEP IS MANDATORY - DO NOT SKIP                    ║
 ║                                                              ║
-║  If GPT review is enabled in config, you MUST run it after  ║
-║  EVERY task. No exceptions. No "I'll do it later."          ║
+║  If GPT review is enabled, you MUST run it after EVERY      ║
+║  code change. This includes:                                 ║
 ║                                                              ║
-║  A task without GPT review is an INCOMPLETE task.            ║
+║  - Full task implementations                                 ║
+║  - Quick fixes and small updates                             ║
+║  - Refactors and bug fixes                                   ║
+║  - ANY modification to code files                            ║
+║                                                              ║
+║  WHY: Claude fabricates data (metrics, results, logic).      ║
+║  GPT catches fabrication. This is not optional.              ║
 ╚══════════════════════════════════════════════════════════════╝
 ```
 
-GPT reviews EACH TASK, not the whole sprint. After completing each task (code + tests), run GPT review before moving to the next task. This keeps the review scope small and focused.
+GPT reviews EACH CODE CHANGE, not the whole sprint. After ANY code modification, run GPT review before moving on. This catches fabrications early when they're easy to fix.
 
 **Check if enabled (do this ONCE at sprint start, remember the result):**
 ```bash
