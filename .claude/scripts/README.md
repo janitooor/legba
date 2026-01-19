@@ -16,6 +16,7 @@ Bash utilities for deterministic operations in the Loa framework.
 | `check-beads.sh` | Check if Beads (bd CLI) is installed | 0=installed, 1=not installed |
 | `context-check.sh` | Context size assessment for parallel execution | 0=success |
 | `git-safety.sh` | Template repository detection | 0=template, 1=not template |
+| `gpt-review-api.sh` | GPT 5.2 API for cross-model review | 0=success, 1=API error, 2=invalid input, 3=timeout, 4=missing key |
 | `preflight.sh` | Pre-flight validation functions | 0=pass, 1=fail |
 | `check-feedback-status.sh` | Check sprint feedback state | 0=success, 1=error, 2=invalid |
 | `validate-sprint-id.sh` | Validate sprint ID format | 0=valid, 1=invalid |
@@ -100,6 +101,22 @@ get_user_type
 
 ./.claude/scripts/check-beads.sh --quiet
 # Returns: INSTALLED | NOT_INSTALLED (no install instructions)
+```
+
+### GPT 5.2 Cross-Model Review
+```bash
+# Requires OPENAI_API_KEY environment variable
+export OPENAI_API_KEY="sk-..."
+
+# Review code changes
+./.claude/scripts/gpt-review-api.sh code /path/to/diff.txt /path/to/augmentation.txt
+# Returns JSON: {"verdict": "APPROVED|CHANGES_REQUIRED|DECISION_NEEDED", ...}
+
+# Review PRD
+./.claude/scripts/gpt-review-api.sh prd /path/to/prd.md
+# Returns JSON with review feedback
+
+# Review types: code, prd, sdd, sprint
 ```
 
 ## Design Principles

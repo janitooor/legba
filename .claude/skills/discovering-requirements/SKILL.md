@@ -406,3 +406,117 @@ Every claim about existing context must include citation:
 | Partial coverage | Conduct mini-interviews for gaps only |
 | Developer disagrees with synthesis | Allow corrections, update understanding |
 </edge_cases>
+
+<gpt_review_phase>
+## Phase 7.5: GPT PRD Review (If Enabled)
+
+After completing the PRD draft but BEFORE writing the final `grimoires/loa/prd.md`:
+
+**Check if enabled:**
+```bash
+yq eval '.gpt_review.enabled // false' .loa.config.yaml
+yq eval '.gpt_review.phases.prd // false' .loa.config.yaml
+```
+
+If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
+
+### Step 1: Prepare Review Context
+
+1. Save PRD draft to temp file:
+   ```bash
+   # PRD draft saved to /tmp/prd-draft.md
+   ```
+
+2. Create augmentation file with project context:
+   ```markdown
+   ## Project Context
+
+   **Project Type:** [extracted from context files or interview]
+   **Domain:** [e.g., DeFi, SaaS, Developer Tools]
+
+   ## Discovery Summary
+
+   **Phases Completed:** [list phases with source counts]
+   **Context Files Reviewed:** [count and key files]
+   **Interview Questions Asked:** [count per phase]
+
+   ## Key Constraints Discovered
+
+   - [constraint 1 from discovery]
+   - [constraint 2 from discovery]
+
+   ## Stakeholder Priorities
+
+   - [primary persona and their key needs]
+   - [secondary personas]
+   ```
+
+   Save to `/tmp/gpt-prd-augmentation.md`
+
+### Step 2: Call GPT Review
+
+```bash
+.claude/scripts/gpt-review-api.sh prd /tmp/prd-draft.md /tmp/gpt-prd-augmentation.md
+```
+
+Parse the JSON response and extract:
+- `verdict`: APPROVED | CHANGES_REQUIRED | DECISION_NEEDED
+- `issues`: Array of blocking issues (missing requirements, contradictions, ambiguities)
+- `recommendations`: Array of improvements
+- `question`: Only present if DECISION_NEEDED
+
+### Step 3: Handle Verdict
+
+**If APPROVED:**
+- Log success to trajectory
+- Proceed to write final `grimoires/loa/prd.md`
+- Include GPT review metadata in document
+
+**If CHANGES_REQUIRED:**
+- Read all issues and recommendations
+- Revise PRD draft to address each issue
+- Claude has discretion on HOW to address recommendations
+- Re-save draft and call GPT review again (return to Step 2)
+- **NO user input needed** - Claude fixes automatically
+- Loop until APPROVED
+
+**If DECISION_NEEDED:**
+- Extract the `question` field from response
+- Ask user the specific question
+- After user responds, incorporate their guidance
+- Re-review if needed
+
+### Step 4: Track Iterations
+
+Log each iteration to trajectory:
+```json
+{
+  "timestamp": "...",
+  "agent": "discovering-requirements",
+  "action": "gpt_review",
+  "iteration": 1,
+  "verdict": "CHANGES_REQUIRED",
+  "issues_count": 2,
+  "recommendations_count": 1,
+  "model": "gpt-5.2-pro"
+}
+```
+
+### GPT Review Metadata for prd.md
+
+Include at the end of the PRD:
+```markdown
+---
+
+## Document Metadata
+
+**GPT Review Status:** APPROVED
+**GPT Review Iterations:** 2
+**GPT Review Model:** gpt-5.2-pro
+**Issues Addressed:**
+- [Issue 1] → [How resolved]
+
+**Recommendations Addressed:**
+- [Recommendation 1] → [How addressed]
+```
+</gpt_review_phase>

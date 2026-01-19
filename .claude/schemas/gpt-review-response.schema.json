@@ -1,0 +1,138 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://loa.dev/schemas/gpt-review-response.schema.json",
+  "title": "GPT Review Response",
+  "description": "Schema for GPT 5.2 cross-model review responses",
+  "type": "object",
+  "required": ["verdict", "summary"],
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["APPROVED", "CHANGES_REQUIRED", "DECISION_NEEDED"],
+      "description": "The review verdict determining next action"
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "description": "One sentence overall assessment"
+    },
+    "issues": {
+      "type": "array",
+      "description": "Blocking issues that MUST be fixed",
+      "items": {
+        "type": "object",
+        "required": ["severity", "location", "description", "fix"],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": ["critical", "major"],
+            "description": "Issue severity level"
+          },
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "description": "File:line, function name, or section reference"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "What is wrong"
+          },
+          "fix": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Exact code change or clear instruction to fix"
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "recommendations": {
+      "type": "array",
+      "description": "Non-blocking improvements that must be addressed",
+      "items": {
+        "type": "object",
+        "required": ["location", "suggestion", "rationale"],
+        "properties": {
+          "location": {
+            "type": "string",
+            "minLength": 1,
+            "description": "File:line, function name, or section reference"
+          },
+          "suggestion": {
+            "type": "string",
+            "minLength": 1,
+            "description": "How this could be better"
+          },
+          "rationale": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Why this matters"
+          }
+        },
+        "additionalProperties": false
+      },
+      "default": []
+    },
+    "fabrication_check": {
+      "type": "object",
+      "description": "Results of fabrication/cheating detection (code reviews only)",
+      "properties": {
+        "passed": {
+          "type": "boolean",
+          "description": "Whether the code passed fabrication checks"
+        },
+        "concerns": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of suspicious patterns, even if not conclusive",
+          "default": []
+        }
+      },
+      "required": ["passed"],
+      "additionalProperties": false
+    },
+    "question": {
+      "type": "string",
+      "description": "Specific question for user (only when verdict is DECISION_NEEDED)"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "verdict": { "const": "DECISION_NEEDED" }
+        }
+      },
+      "then": {
+        "required": ["question"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "verdict": { "const": "CHANGES_REQUIRED" }
+        }
+      },
+      "then": {
+        "anyOf": [
+          {
+            "properties": {
+              "issues": { "minItems": 1 }
+            }
+          },
+          {
+            "properties": {
+              "recommendations": { "minItems": 1 }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "additionalProperties": false
+}

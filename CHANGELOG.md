@@ -5,6 +5,71 @@ All notable changes to Loa will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-01-18
+
+### Why This Release
+
+This release adds GPT 5.2 cross-model review integration, providing an independent quality gate where GPT reviews Claude's outputs before they are finalized. The feature is invisible to users—existing commands work exactly the same, just with higher quality output.
+
+### Added
+
+- **GPT 5.2 Cross-Model Review**
+  - Internal review of all document phases (PRD, SDD, Sprint, Code)
+  - Uses `gpt-5.2-pro` for document reviews (high reasoning)
+  - Uses `gpt-5.2-codex` for code reviews (code-optimized)
+  - Automatic fix-and-resubmit when CHANGES_REQUIRED
+  - User escalation only for DECISION_NEEDED (rare)
+
+- **`/gpt-review` command** (`.claude/commands/gpt-review.md`)
+  - Toggle GPT integration on/off: `/gpt-review`, `/gpt-review on`, `/gpt-review off`
+  - Check current status: `/gpt-review status`
+
+- **`gpt-review-api.sh` script** (`.claude/scripts/gpt-review-api.sh`)
+  - Direct OpenAI API integration via curl
+  - JSON response parsing with `jq`
+  - Retry logic with exponential backoff
+  - Secure API key handling (env var only)
+
+- **GPT Review Prompts** (`.claude/prompts/gpt-review/base/`)
+  - `code-review.md` - Hard auditor for bugs, fabrication, security
+  - `prd-review.md` - Completeness, clarity, contradictions
+  - `sdd-review.md` - Architecture coherence, feasibility
+  - `sprint-review.md` - Task clarity, acceptance criteria
+
+- **Response Schema** (`.claude/schemas/gpt-review-response.schema.json`)
+  - Structured JSON output validation
+  - Verdicts: APPROVED, CHANGES_REQUIRED, DECISION_NEEDED
+
+- **Integration Protocol** (`.claude/protocols/gpt-review-integration.md`)
+  - Full specification for internal integration pattern
+  - End-to-end testing documentation (8 test scenarios)
+  - Troubleshooting guide
+
+### Changed
+
+- **All document skills updated** with internal GPT review phase:
+  - `discovering-requirements` - Phase 7.5: GPT PRD Review
+  - `designing-architecture` - Phase 3.5: GPT SDD Review
+  - `planning-sprints` - Phase 3.5: GPT Sprint Review
+  - `implementing-tasks` - Phase 2.5: GPT Code Review
+
+- **`.loa.config.yaml`** - Added `gpt_review` configuration section
+  - Master toggle: `gpt_review.enabled`
+  - Per-phase toggles: `gpt_review.phases.*`
+  - Model configuration: `gpt_review.models.*`
+  - Enforcement level: `gpt_review.enforcement`
+
+- **`feedback-loops.md` protocol** - Added "GPT Review (Internal to Phases)" section
+
+- **`implementation-report.md` template** - Added "## GPT Review" section
+
+### Environment Variables
+
+- `OPENAI_API_KEY` - Required for GPT review functionality
+- `GPT_REVIEW_DISABLED=1` - Override to disable GPT review entirely
+
+---
+
 ## [0.15.0] - 2026-01-17
 
 ### Why This Release

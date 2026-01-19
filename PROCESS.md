@@ -60,6 +60,11 @@ Detailed specifications are maintained in separate protocol files (single source
 - **Attention Budget**: `.claude/protocols/attention-budget.md` - Token thresholds (Green/Yellow/Red)
 - **JIT Retrieval**: `.claude/protocols/jit-retrieval.md` - Lightweight identifiers (97% token reduction)
 
+### GPT 5.2 Cross-Model Review (v0.16.0)
+- **GPT Review Integration**: `.claude/protocols/gpt-review-integration.md` - Internal review pattern, verdict handling, E2E testing
+- Toggle with `/gpt-review on|off|status`
+- Requires `OPENAI_API_KEY` environment variable
+
 ## Table of Contents
 
 - [Managed Scaffolding Architecture](#managed-scaffolding-architecture)

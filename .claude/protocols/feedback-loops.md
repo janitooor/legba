@@ -81,6 +81,77 @@ Engineer → Security Auditor → Engineer → ... → Security Approval
 - Data privacy protected
 - Dependencies secure (no known CVEs)
 
+## GPT Review (Internal to Phases)
+
+GPT 5.2 cross-model review is **NOT** a separate feedback loop. It is embedded **WITHIN** existing phases.
+
+### How It Works
+
+```
+┌──────────────────────────────────────────────────┐
+│           INSIDE /implement (example)            │
+│                                                  │
+│  1. Claude writes code                           │
+│  2. GPT 5.2 reviews internally ◄─────┐          │
+│  3. If CHANGES_REQUIRED:             │          │
+│     - Claude fixes automatically     │          │
+│     - Re-review ─────────────────────┘          │
+│  4. If APPROVED: Write reviewer.md              │
+│                                                  │
+└──────────────────────────────────────────────────┘
+```
+
+### Key Points
+
+- **No new commands** - User runs same `/implement`, `/plan-and-analyze`, etc.
+- **Internal loop** - GPT review loop happens INSIDE the phase
+- **Automatic fixes** - CHANGES_REQUIRED triggers Claude to fix without user input
+- **User involved only for DECISION_NEEDED** - Rare, when GPT has a genuine question
+- **Invisible to user** - User only sees slightly slower execution with higher quality output
+
+### Integration with Existing Loops
+
+GPT review happens **BEFORE** the implementation feedback loop:
+
+```
+/implement sprint-1
+    │
+    ├─► [GPT reviews code internally]
+    │       ↓
+    │   [Claude fixes if needed]
+    │       ↓
+    │   [GPT approves]
+    │
+    ▼
+reviewer.md created (includes GPT review status)
+    │
+    ▼
+/review-sprint sprint-1  ◄── Senior Lead review starts here
+    │
+    ▼
+[Standard feedback loop continues...]
+```
+
+### Configuration
+
+See `.loa.config.yaml`:
+
+```yaml
+gpt_review:
+  enabled: true
+  phases:
+    implementation: true  # Enable for /implement
+    prd: true            # Enable for /plan-and-analyze
+    sdd: true            # Enable for /architect
+    sprint: true         # Enable for /sprint-plan
+```
+
+### Protocol Reference
+
+See `.claude/protocols/gpt-review-integration.md` for full specification.
+
+---
+
 ## 3. Deployment Feedback Loop
 
 ### Flow

@@ -121,6 +121,42 @@
 
 ---
 
+## GPT Review
+
+{Include this section if GPT review was enabled for this sprint}
+
+**Status:** {APPROVED}
+**Iterations:** {N}
+**Model:** {gpt-5.2-codex}
+**Date:** {DATE}
+
+### Summary
+
+{One-line summary from GPT's final review}
+
+### Issues Addressed
+
+{List issues found and how they were fixed. Omit if no issues.}
+
+| Issue | Severity | Resolution |
+|-------|----------|------------|
+| {Issue description} | {critical/major} | {How it was fixed} |
+
+### Recommendations Addressed
+
+{List recommendations and how they were addressed. Omit if none.}
+
+| Recommendation | Resolution |
+|----------------|------------|
+| {Recommendation} | {How it was addressed / Claude's decision} |
+
+### Fabrication Check
+
+- **Status:** {PASSED / CONCERNS}
+- **Concerns:** {None / List any concerns flagged}
+
+---
+
 ## Known Limitations
 
 {Any technical debt, limitations, or areas for future improvement}

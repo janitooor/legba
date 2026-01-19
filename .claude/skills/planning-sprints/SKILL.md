@@ -344,3 +344,128 @@ Each sprint includes:
 - **Maintain Flexibility**: Build buffer for unknowns in later sprints
 - **Focus on MVP**: Ruthlessly prioritize essential features
 </planning_principles>
+
+<gpt_review_phase>
+## Phase 3.5: GPT Sprint Review (If Enabled)
+
+After completing the sprint plan draft but BEFORE writing the final `grimoires/loa/sprint.md`:
+
+**Check if enabled:**
+```bash
+yq eval '.gpt_review.enabled // false' .loa.config.yaml
+yq eval '.gpt_review.phases.sprint // false' .loa.config.yaml
+```
+
+If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
+
+### Step 1: Prepare Review Context
+
+1. Save sprint plan draft to temp file:
+   ```bash
+   # Sprint plan draft saved to /tmp/sprint-draft.md
+   ```
+
+2. Create augmentation file with PRD/SDD context:
+   ```markdown
+   ## Project Context
+
+   **Project Type:** [from prd.md summary]
+   **PRD Reference:** grimoires/loa/prd.md
+   **SDD Reference:** grimoires/loa/sdd.md
+
+   ## PRD Goals
+
+   **MVP Features:**
+   - [feature 1 from PRD]
+   - [feature 2 from PRD]
+
+   **Success Criteria:**
+   - [criterion 1 from PRD]
+   - [criterion 2 from PRD]
+
+   ## SDD Components
+
+   **Architecture Decisions:**
+   - [key decision 1 from SDD]
+   - [key decision 2 from SDD]
+
+   **Technical Components:**
+   - [component 1]
+   - [component 2]
+
+   ## Planning Constraints
+
+   - Sprint duration: 2.5 days
+   - Team size: [from integration context or assumption]
+   - Dependencies: [external dependencies from PRD]
+   ```
+
+   Save to `/tmp/gpt-sprint-augmentation.md`
+
+### Step 2: Call GPT Review
+
+```bash
+.claude/scripts/gpt-review-api.sh sprint /tmp/sprint-draft.md /tmp/gpt-sprint-augmentation.md
+```
+
+Parse the JSON response and extract:
+- `verdict`: APPROVED | CHANGES_REQUIRED | DECISION_NEEDED
+- `issues`: Array of blocking issues (unclear tasks, missing acceptance criteria, dependency problems)
+- `recommendations`: Array of improvements
+- `question`: Only present if DECISION_NEEDED
+
+### Step 3: Handle Verdict
+
+**If APPROVED:**
+- Log success to trajectory
+- Proceed to write final `grimoires/loa/sprint.md`
+- Include GPT review metadata in document
+
+**If CHANGES_REQUIRED:**
+- Read all issues and recommendations
+- Revise sprint plan draft to address each issue
+- Claude has discretion on HOW to address recommendations
+- Re-save draft and call GPT review again (return to Step 2)
+- **NO user input needed** - Claude fixes automatically
+- Loop until APPROVED
+
+**If DECISION_NEEDED:**
+- Extract the `question` field from response
+- Ask user the specific question (e.g., scope/priority decisions)
+- After user responds, incorporate their guidance
+- Re-review if needed
+
+### Step 4: Track Iterations
+
+Log each iteration to trajectory:
+```json
+{
+  "timestamp": "...",
+  "agent": "planning-sprints",
+  "action": "gpt_review",
+  "iteration": 1,
+  "verdict": "CHANGES_REQUIRED",
+  "issues_count": 2,
+  "recommendations_count": 1,
+  "model": "gpt-5.2-pro"
+}
+```
+
+### GPT Review Metadata for sprint.md
+
+Include at the end of the sprint plan:
+```markdown
+---
+
+## Document Metadata
+
+**GPT Review Status:** APPROVED
+**GPT Review Iterations:** 2
+**GPT Review Model:** gpt-5.2-pro
+**Issues Addressed:**
+- [Issue 1] → [How resolved]
+
+**Recommendations Addressed:**
+- [Recommendation 1] → [How addressed]
+```
+</gpt_review_phase>

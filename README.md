@@ -1,6 +1,6 @@
 # Loa
 
-[![Version](https://img.shields.io/badge/version-0.15.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.16.0-blue.svg)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-AGPL--3.0-green.svg)](LICENSE.md)
 
 > *"The Loa are pragmatic entities... They're not worshipped for salvation—they're worked with for practical results."*
@@ -26,6 +26,10 @@ For THJ team members with `LOA_CONSTRUCTS_API_KEY`:
 - **Analytics tracking** - Usage metrics for THJ developers
 - **`/feedback` command** - Submit feedback to Linear
 - **Loa Constructs** - Commercial skill packs from registry
+
+For GPT 5.2 cross-model review (v0.16.0+):
+- **`OPENAI_API_KEY`** - Enables GPT to review Claude's outputs before finalization
+- Toggle with `/gpt-review on` or `/gpt-review off`
 
 ## Quick Start
 
@@ -92,6 +96,7 @@ Loa uses a **managed scaffolding** architecture inspired by AWS Projen, Copier, 
 | `/translate @doc for audience` | Executive summaries |
 | `/update` | Pull framework updates |
 | `/contribute` | Create upstream PR |
+| `/gpt-review` | Toggle GPT 5.2 cross-model review |
 
 ## The Agents (The Loa)
 

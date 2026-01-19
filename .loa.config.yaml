@@ -366,6 +366,50 @@ context_management:
       - intermediate_outputs
 
 # =============================================================================
+# GPT 5.2 Cross-Model Review (v0.15.0)
+# =============================================================================
+# GPT reviews Claude's outputs INTERNALLY within each phase
+# No new commands - user experience unchanged, just higher quality output
+gpt_review:
+  # Master toggle - set to false to disable all GPT reviews
+  enabled: true
+
+  # API configuration
+  api_key_env: "OPENAI_API_KEY"  # Environment variable name for API key
+  timeout_seconds: 300            # Per-request timeout
+  max_retries: 3                  # Retry on transient failures
+
+  # Model selection
+  models:
+    documents: "gpt-5.2-pro"      # For PRD, SDD, Sprint reviews (high reasoning)
+    code: "gpt-5.2-codex"         # For code reviews (code-optimized)
+
+  # Per-phase toggles - enable/disable GPT review for specific phases
+  phases:
+    prd: true                     # Review PRD in /plan-and-analyze
+    sdd: true                     # Review SDD in /architect
+    sprint: true                  # Review sprint plan in /sprint-plan
+    implementation: true          # Review code in /implement
+
+  # Enforcement level
+  # - strict: Hard block - must get GPT approval before proceeding
+  # - warn: Show GPT feedback but allow continuing
+  # - disabled: Skip GPT review entirely
+  enforcement: strict
+
+  # Context options for reviews
+  context:
+    include_full_diff: true       # Include complete git diff
+    include_task_description: true # Include task from sprint.md
+    include_acceptance_criteria: true # Include acceptance criteria
+    max_context_tokens: 50000     # Truncate if context exceeds this
+
+  # Prompt augmentation
+  augmentation:
+    enabled: true                 # Allow Claude to augment base prompts
+    log_augmentation: false       # Save augmentation to file for debugging
+
+# =============================================================================
 # Update Check (v0.14.0)
 # =============================================================================
 # Automatic version checking on session start

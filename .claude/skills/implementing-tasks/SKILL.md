@@ -331,6 +331,113 @@ The user only runs `/implement sprint-1`. All bd commands are invisible.
 - Consistent formatting
 - Future maintainability
 
+## Phase 2.5: GPT Code Review (If Enabled)
+
+After code implementation is complete, GPT 5.2 reviews the code BEFORE writing reviewer.md.
+
+**Check if enabled:**
+```bash
+yq eval '.gpt_review.enabled // false' .loa.config.yaml
+yq eval '.gpt_review.phases.implementation // false' .loa.config.yaml
+```
+
+If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
+
+### Step 1: Prepare Review Context
+
+1. Generate diff of changes:
+   ```bash
+   git diff HEAD~1 --unified=5 > /tmp/code-diff.txt
+   # Or for unstaged: git diff --unified=5 > /tmp/code-diff.txt
+   ```
+
+2. Create augmentation file with project context:
+   ```markdown
+   ## Project Context
+
+   **Project Type:** [from prd.md summary]
+   **Architecture:** [from sdd.md key decisions]
+
+   ## Current Sprint Task
+
+   **Task:** [task description from sprint.md]
+   **Acceptance Criteria:**
+   - [criterion 1]
+   - [criterion 2]
+
+   ## Key Constraints
+
+   - [any domain-specific constraints from PRD/SDD]
+   ```
+
+   Save to `/tmp/gpt-augmentation.md`
+
+### Step 2: Call GPT Review
+
+```bash
+.claude/scripts/gpt-review-api.sh code /tmp/code-diff.txt /tmp/gpt-augmentation.md
+```
+
+Parse the JSON response and extract:
+- `verdict`: APPROVED | CHANGES_REQUIRED | DECISION_NEEDED
+- `issues`: Array of blocking issues
+- `recommendations`: Array of improvements to address
+- `fabrication_check`: Fabrication detection results
+
+### Step 3: Handle Verdict
+
+**If APPROVED:**
+- Log success to trajectory
+- Proceed to Phase 3 (Documentation)
+- Include GPT review summary in reviewer.md
+
+**If CHANGES_REQUIRED:**
+- Read all issues and recommendations
+- Fix each issue (Claude has discretion on HOW for recommendations)
+- Re-run git diff to capture fixes
+- Call GPT review again (return to Step 2)
+- **NO user input needed** - Claude fixes automatically
+- Loop until APPROVED
+
+**If DECISION_NEEDED:**
+- Extract the `question` field from response
+- Ask user the specific question using AskUserQuestion
+- After user responds, continue with their guidance
+- Re-review if needed
+
+### Step 4: Track Iterations
+
+Log each iteration to trajectory:
+```json
+{
+  "timestamp": "...",
+  "agent": "implementing-tasks",
+  "action": "gpt_review",
+  "iteration": 1,
+  "verdict": "CHANGES_REQUIRED",
+  "issues_count": 2,
+  "recommendations_count": 1,
+  "model": "gpt-5.2-codex"
+}
+```
+
+### GPT Review Summary for reviewer.md
+
+Include in the final report:
+```markdown
+## GPT Review
+
+**Status:** APPROVED
+**Iterations:** 2
+**Model:** gpt-5.2-codex
+
+### Issues Addressed
+1. [Issue 1 description] → [How it was fixed]
+
+### Recommendations Addressed
+1. [Recommendation] → [How it was addressed]
+```
+
 ## Phase 3: Documentation and Reporting
 
 Create report at `grimoires/loa/a2a/sprint-N/reviewer.md`:

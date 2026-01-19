@@ -132,7 +132,7 @@ Overrides survive framework updates.
 
 **Mount & Ride** (existing codebases): `/mount`, `/ride`
 
-**Ad-hoc**: `/audit`, `/audit-deployment`, `/translate @doc for audience`, `/contribute`, `/update`, `/feedback` (THJ only)
+**Ad-hoc**: `/audit`, `/audit-deployment`, `/translate @doc for audience`, `/contribute`, `/update`, `/feedback` (THJ only), `/gpt-review` (toggle GPT integration)
 
 **THJ Detection** (v0.15.0+): THJ membership is detected via `LOA_CONSTRUCTS_API_KEY` environment variable. No setup required - start with `/plan-and-analyze` immediately after cloning.
 
@@ -221,6 +221,64 @@ Three quality gates - see `.claude/protocols/feedback-loops.md`:
 **Priority**: Audit feedback checked FIRST on `/implement`, then engineer feedback.
 
 **Sprint completion marker**: `grimoires/loa/a2a/sprint-N/COMPLETED` created on security approval.
+
+### GPT 5.2 Cross-Model Review (v0.16.0)
+
+GPT 5.2 provides independent cross-model review of Loa outputs to catch issues that self-review might miss.
+
+**Key Principle:** GPT review is **INTERNAL** to existing phases. No new commands for users. The user experience is unchanged except phases may take slightly longer and produce higher quality output.
+
+**How it works:**
+- Each skill (PRD, SDD, Sprint, Implementation) internally calls GPT BEFORE writing final output
+- If APPROVED: Output is written
+- If CHANGES_REQUIRED: Claude fixes automatically, re-reviews (no user input needed)
+- If DECISION_NEEDED: User is asked the specific question (rare)
+
+**Models Used:**
+- `gpt-5.2-pro` - Document reviews (PRD, SDD, Sprint)
+- `gpt-5.2-codex` - Code reviews
+
+**Configuration** (`.loa.config.yaml`):
+```yaml
+gpt_review:
+  enabled: true                    # Master toggle
+  api_key_env: "OPENAI_API_KEY"   # Environment variable name
+  timeout_seconds: 300             # Per-request timeout
+  max_retries: 3                   # Retry on transient failures
+
+  models:
+    documents: "gpt-5.2-pro"       # PRD, SDD, Sprint review
+    code: "gpt-5.2-codex"          # Code review
+
+  phases:
+    prd: true                      # Review PRD before writing
+    sdd: true                      # Review SDD before writing
+    sprint: true                   # Review sprint plan before writing
+    implementation: true           # Review code before writing reviewer.md
+    security_audit: false          # Future: audit GPT review
+
+  enforcement: strict              # strict | warn | disabled
+```
+
+**Toggle Command:**
+```
+/gpt-review          # Toggle on/off
+/gpt-review status   # Show current config
+/gpt-review on       # Enable
+/gpt-review off      # Disable
+```
+
+**Environment Variables:**
+- `OPENAI_API_KEY` - Required for GPT reviews
+- `GPT_REVIEW_DISABLED=1` - Override to disable entirely
+
+**Prompts:** `.claude/prompts/gpt-review/base/`
+- `code-review.md` - Hard auditor for fabrication, bugs, security
+- `prd-review.md` - Completeness, clarity, contradictions
+- `sdd-review.md` - Architecture soundness, component design
+- `sprint-review.md` - Task clarity, acceptance criteria, dependencies
+
+**Protocol**: See `.claude/protocols/gpt-review-integration.md`
 
 ### Git Safety
 
@@ -336,7 +394,8 @@ Use `.claude/scripts/context-check.sh` for assessment.
 ├── context-manager.sh        # Context compaction and preservation (v0.11.0)
 ├── context-benchmark.sh      # Context performance benchmarks (v0.11.0)
 ├── anthropic-oracle.sh       # Anthropic updates monitoring (v0.13.0)
-└── check-updates.sh          # Automatic version checking (v0.14.0)
+├── check-updates.sh          # Automatic version checking (v0.14.0)
+└── gpt-review-api.sh         # GPT 5.2 cross-model review API (v0.16.0)
 ```
 
 ### Update Check (v0.14.0)

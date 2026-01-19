@@ -173,6 +173,39 @@ edd:
   trajectory_audit: true
 ```
 
+### GPT 5.2 Cross-Model Review (v0.16.0+)
+
+Enable GPT to review Claude's outputs before finalization for higher quality.
+
+**Environment Variable**:
+```bash
+export OPENAI_API_KEY="sk-your-api-key-here"
+```
+
+**Configuration** (`.loa.config.yaml`):
+```yaml
+gpt_review:
+  enabled: true                    # Master toggle
+  models:
+    documents: "gpt-5.2-pro"       # PRD, SDD, Sprint reviews
+    code: "gpt-5.2-codex"          # Code reviews
+  phases:
+    prd: true                      # Review PRD
+    sdd: true                      # Review SDD
+    sprint: true                   # Review sprint plan
+    implementation: true           # Review code
+  enforcement: strict              # strict | warn | disabled
+```
+
+**Toggle at runtime**:
+```
+/gpt-review on       # Enable
+/gpt-review off      # Disable
+/gpt-review status   # Show current config
+```
+
+Without `OPENAI_API_KEY`, GPT review is silently skipped and the workflow continues normally.
+
 ### Stealth Mode
 
 Run Loa without committing state files to your repo:

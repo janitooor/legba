@@ -283,3 +283,122 @@ When making architectural choices:
 - Use diagrams or structured text to illustrate complex concepts
 - Provide concrete examples and sample code where helpful
 </communication_style>
+
+<gpt_review_phase>
+## Phase 3.5: GPT SDD Review (If Enabled)
+
+After completing the SDD draft but BEFORE writing the final `grimoires/loa/sdd.md`:
+
+**Check if enabled:**
+```bash
+yq eval '.gpt_review.enabled // false' .loa.config.yaml
+yq eval '.gpt_review.phases.sdd // false' .loa.config.yaml
+```
+
+If both are `true` AND `OPENAI_API_KEY` is set, proceed with GPT review.
+
+### Step 1: Prepare Review Context
+
+1. Save SDD draft to temp file:
+   ```bash
+   # SDD draft saved to /tmp/sdd-draft.md
+   ```
+
+2. Create augmentation file with PRD context:
+   ```markdown
+   ## Project Context
+
+   **Project Type:** [from prd.md summary]
+   **PRD Reference:** grimoires/loa/prd.md
+
+   ## Key PRD Requirements
+
+   **Functional Requirements:**
+   - FR-1: [summary]
+   - FR-2: [summary]
+
+   **Non-Functional Requirements:**
+   - Performance: [targets from PRD]
+   - Security: [requirements from PRD]
+   - Scale: [expected load from PRD]
+
+   ## Technical Constraints
+
+   - [constraint 1 from PRD]
+   - [constraint 2 from PRD]
+
+   ## Architecture Goals
+
+   - [primary architecture objective]
+   - [secondary objectives]
+   ```
+
+   Save to `/tmp/gpt-sdd-augmentation.md`
+
+### Step 2: Call GPT Review
+
+```bash
+.claude/scripts/gpt-review-api.sh sdd /tmp/sdd-draft.md /tmp/gpt-sdd-augmentation.md
+```
+
+Parse the JSON response and extract:
+- `verdict`: APPROVED | CHANGES_REQUIRED | DECISION_NEEDED
+- `issues`: Array of blocking issues (architectural flaws, missing components, security gaps)
+- `recommendations`: Array of improvements
+- `question`: Only present if DECISION_NEEDED
+
+### Step 3: Handle Verdict
+
+**If APPROVED:**
+- Log success to trajectory
+- Proceed to write final `grimoires/loa/sdd.md`
+- Include GPT review metadata in document
+
+**If CHANGES_REQUIRED:**
+- Read all issues and recommendations
+- Revise SDD draft to address each issue
+- Claude has discretion on HOW to address recommendations
+- Re-save draft and call GPT review again (return to Step 2)
+- **NO user input needed** - Claude fixes automatically
+- Loop until APPROVED
+
+**If DECISION_NEEDED:**
+- Extract the `question` field from response
+- Ask user the specific question (e.g., technology choice trade-offs)
+- After user responds, incorporate their guidance
+- Re-review if needed
+
+### Step 4: Track Iterations
+
+Log each iteration to trajectory:
+```json
+{
+  "timestamp": "...",
+  "agent": "designing-architecture",
+  "action": "gpt_review",
+  "iteration": 1,
+  "verdict": "CHANGES_REQUIRED",
+  "issues_count": 2,
+  "recommendations_count": 1,
+  "model": "gpt-5.2-pro"
+}
+```
+
+### GPT Review Metadata for sdd.md
+
+Include at the end of the SDD:
+```markdown
+---
+
+## Document Metadata
+
+**GPT Review Status:** APPROVED
+**GPT Review Iterations:** 2
+**GPT Review Model:** gpt-5.2-pro
+**Issues Addressed:**
+- [Issue 1] → [How resolved]
+
+**Recommendations Addressed:**
+- [Recommendation 1] → [How addressed]
+```
+</gpt_review_phase>
