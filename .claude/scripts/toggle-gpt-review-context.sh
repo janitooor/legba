@@ -8,7 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 CONFIG_FILE="$ROOT_DIR/.loa.config.yaml"
 TEMPLATE_FILE="$ROOT_DIR/.claude/templates/gpt-review-instructions.md.template"
-CONTEXT_FILE="$ROOT_DIR/.claude/context/gpt-review-active.md"
+CONTEXT_DIR="$ROOT_DIR/.claude/context"
+CONTEXT_FILE="$CONTEXT_DIR/gpt-review-active.md"
+
+# Ensure context directory exists
+mkdir -p "$CONTEXT_DIR"
 
 # Check if yq is available
 if ! command -v yq &>/dev/null; then
