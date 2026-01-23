@@ -2,12 +2,7 @@
 
 Guidance for Claude Code when working in this repository.
 
-## GPT Review Reminder (MANDATORY)
-
-If you see `>> GPT Review:` after editing code, you MUST run it before moving on. This is not optional.
-- Run GPT review after completing each coding task (not every single edit, but after each logical group of changes)
-- Use iteration flags for re-reviews: `--iteration N --previous /tmp/gpt-review-findings-{N-1}.json`
-- Do not skip or ignore the reminder
+**Dynamic instructions**: If `.claude/context/gpt-review-active.md` exists, read and follow it.
 
 ## Project Overview
 

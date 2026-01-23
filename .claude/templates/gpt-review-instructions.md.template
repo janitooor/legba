@@ -1,45 +1,48 @@
-# GPT Review Protocol (Active)
+# GPT Review Protocol (MANDATORY)
 
-GPT cross-model review is **enabled**. A PostToolUse hook will remind you after code changes.
+GPT cross-model review is **enabled**. You MUST run GPT review after completing any coding task.
 
-## Running GPT Review
+## When to Run
 
-**For code changes:**
+After ANY code changes (Edit/Write on code files), run GPT review **before moving on**:
+
 ```bash
 .claude/scripts/gpt-review-api.sh code <changed-file>
 ```
 
-**For documents (during workflows):**
+- Not every single edit, but after each **logical group of changes** (completing a task, fixing a bug, implementing a feature)
+- This is NOT optional - do not skip or ignore
+
+## Handling Verdicts
+
+| Verdict | Action |
+|---------|--------|
+| `SKIPPED` | Continue (review disabled at phase level) |
+| `APPROVED` | Continue (no issues found) |
+| `CHANGES_REQUIRED` | Fix the issues, then re-run with iteration tracking |
+
+## Iteration Tracking (CRITICAL)
+
+When re-reviewing after fixes, you MUST pass iteration context so GPT verifies fixes rather than re-scanning from scratch:
+
+```bash
+# Save first response
+echo "$response" > /tmp/gpt-review-findings-1.json
+
+# After fixing issues, run iteration 2+
+.claude/scripts/gpt-review-api.sh code <file> \
+  --iteration 2 \
+  --previous /tmp/gpt-review-findings-1.json
+```
+
+Without iteration tracking, GPT will keep finding new issues instead of verifying fixes.
+
+## Document Reviews (During Workflows)
+
 | Document | Command |
 |----------|---------|
 | PRD | `.claude/scripts/gpt-review-api.sh prd grimoires/loa/prd.md` |
 | SDD | `.claude/scripts/gpt-review-api.sh sdd grimoires/loa/sdd.md` |
 | Sprint | `.claude/scripts/gpt-review-api.sh sprint grimoires/loa/sprint.md` |
 
-## Handling Verdicts
-
-```bash
-response=$(.claude/scripts/gpt-review-api.sh <type> <file>)
-verdict=$(echo "$response" | jq -r '.verdict')
-```
-
-| Verdict | Action |
-|---------|--------|
-| `SKIPPED` | Continue (review disabled at phase level) |
-| `APPROVED` | Continue (no issues) |
-| `CHANGES_REQUIRED` | Fix issues in response, then re-run |
-| `DECISION_NEEDED` | Ask user the question, incorporate answer, re-run (documents only) |
-
-## Re-Reviews (Iteration Tracking)
-
-After fixing issues, pass iteration context so GPT verifies fixes rather than re-reviewing from scratch:
-
-```bash
-# Save first response
-echo "$response" > /tmp/gpt-review-findings-1.json
-
-# After fixing, run iteration 2
-response=$(.claude/scripts/gpt-review-api.sh <type> <file> \
-  --iteration 2 \
-  --previous /tmp/gpt-review-findings-1.json)
-```
+Document reviews can return `DECISION_NEEDED` - ask the user the question, then re-run.
