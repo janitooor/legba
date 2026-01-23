@@ -277,7 +277,7 @@ Cross-model review using GPT 5.2 to catch issues Claude might miss.
 
 ### Overview
 
-When enabled, GPT review runs via PostToolUse hook after code changes. The hook outputs a reminder, and the script checks configuration - returning `SKIPPED` if disabled.
+When enabled, GPT review instructions are loaded from `.claude/context/gpt-review-active.md` (created on session start). Follow those instructions after code changes. The script checks configuration - returning `SKIPPED` if disabled.
 
 ### Command
 
