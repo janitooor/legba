@@ -5,6 +5,32 @@ All notable changes to Loa will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.2] - 2026-01-28 — Issues Remediation
+
+### Fixed
+
+- **Mount Script Version Detection** (#56) - Fixed hardcoded fallback version `0.6.0` → `1.7.1`
+  - Version detection now checks root `.loa-version.json` first
+  - Updated banner version from `v0.9.0` to `v1.7.1`
+
+- **Anthropic Oracle URLs** (#58) - Updated Claude Code documentation URLs
+  - Docs moved from `docs.anthropic.com` to `code.claude.com`
+  - Added new endpoints: `memory`, `skills`, `hooks`
+
+### Added
+
+- **Sprint Auto-Continuation** (#55) - `/run sprint-plan` now automatically continues to next sprint
+  - Sprint plan execution loop with automatic advancement
+  - State tracking in `sprint-plan-state.json`
+  - Sprint discovery priority: `sprint.md` → `ledger.json` → `a2a/` directories
+
+- **Sprint Ledger Auto-Creation** (#57) - `/sprint-plan` now offers to create ledger if missing
+  - Step 0 checks for ledger existence before planning
+  - User prompt via `AskUserQuestion` with option to decline
+  - Follows existing ledger.json schema
+
+---
+
 ## [1.7.1] - 2026-01-24 — Template Cleanup
 
 ### Fixed
