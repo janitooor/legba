@@ -14,7 +14,9 @@ START_MARKER="<!-- GPT_REVIEW_GATE_START -->"
 END_MARKER="<!-- GPT_REVIEW_GATE_END -->"
 
 # Gate content for each skill
+# NOTE: Blank line after START_MARKER ensures clean removal (sed removes START to END inclusive)
 PRD_GATE="$START_MARKER
+
 <gpt_review_gate>
 ## GPT Review Gate (Post-PRD)
 
@@ -103,10 +105,9 @@ add_gate() {
   # First remove any existing gate
   remove_gate "$file"
 
-  # Append gate to end of file
+  # Append gate directly - gate format handles spacing
   if [[ -f "$file" ]]; then
-    echo "" >> "$file"
-    echo "$gate" >> "$file"
+    printf '%s\n' "$gate" >> "$file"
   fi
 }
 

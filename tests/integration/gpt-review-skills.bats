@@ -79,6 +79,81 @@ teardown() {
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
+@test "skill files are IDENTICAL to original after gate removal" {
+    # Store checksums of original files
+    local orig_prd_checksum orig_sdd_checksum orig_sprint_checksum orig_impl_checksum
+    orig_prd_checksum=$(md5 -q "$TEST_DIR/discovering-requirements-SKILL.md.bak")
+    orig_sdd_checksum=$(md5 -q "$TEST_DIR/designing-architecture-SKILL.md.bak")
+    orig_sprint_checksum=$(md5 -q "$TEST_DIR/planning-sprints-SKILL.md.bak")
+    orig_impl_checksum=$(md5 -q "$TEST_DIR/implementing-tasks-SKILL.md.bak")
+
+    # Add gates
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    # Verify gates were added
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+
+    # Remove gates
+    cp "$FIXTURES_DIR/configs/disabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    # Verify files are IDENTICAL to originals (byte-for-byte)
+    local new_prd_checksum new_sdd_checksum new_sprint_checksum new_impl_checksum
+    new_prd_checksum=$(md5 -q "$SKILLS_DIR/discovering-requirements/SKILL.md")
+    new_sdd_checksum=$(md5 -q "$SKILLS_DIR/designing-architecture/SKILL.md")
+    new_sprint_checksum=$(md5 -q "$SKILLS_DIR/planning-sprints/SKILL.md")
+    new_impl_checksum=$(md5 -q "$SKILLS_DIR/implementing-tasks/SKILL.md")
+
+    [[ "$orig_prd_checksum" == "$new_prd_checksum" ]]
+    [[ "$orig_sdd_checksum" == "$new_sdd_checksum" ]]
+    [[ "$orig_sprint_checksum" == "$new_sprint_checksum" ]]
+    [[ "$orig_impl_checksum" == "$new_impl_checksum" ]]
+
+    # Cleanup
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+}
+
+@test "injection only adds gate content - rest of skill unchanged" {
+    # Store original line count and content checksum (excluding last line for trailing newline)
+    local orig_lines orig_content
+    orig_lines=$(wc -l < "$TEST_DIR/discovering-requirements-SKILL.md.bak")
+    # Get content without potential trailing newline variance
+    orig_content=$(head -n "$orig_lines" "$TEST_DIR/discovering-requirements-SKILL.md.bak" | md5 -q)
+
+    # Add gates
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    # Verify gate was added
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+
+    # Get new line count
+    local new_lines
+    new_lines=$(wc -l < "$SKILLS_DIR/discovering-requirements/SKILL.md")
+
+    # Gate should add ~17 lines (blank + START marker + content + END marker)
+    local expected_min_lines=$((orig_lines + 15))
+    [[ "$new_lines" -ge "$expected_min_lines" ]]
+
+    # Original content should still be at the start (first N lines unchanged)
+    local new_content
+    new_content=$(head -n "$orig_lines" "$SKILLS_DIR/discovering-requirements/SKILL.md" | md5 -q)
+    [[ "$orig_content" == "$new_content" ]]
+
+    # Cleanup
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+}
+
+@test "gate markers are not present in any skill files at rest" {
+    # Without any config manipulation, skill files should be clean
+    # (This tests that the repo state is correct)
+    ! grep -q "GPT_REVIEW_GATE_START" "$TEST_DIR/discovering-requirements-SKILL.md.bak"
+    ! grep -q "GPT_REVIEW_GATE_START" "$TEST_DIR/designing-architecture-SKILL.md.bak"
+    ! grep -q "GPT_REVIEW_GATE_START" "$TEST_DIR/planning-sprints-SKILL.md.bak"
+    ! grep -q "GPT_REVIEW_GATE_START" "$TEST_DIR/implementing-tasks-SKILL.md.bak"
+}
+
 @test "inject script removes gates when config missing" {
     # Setup: first add gates
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
