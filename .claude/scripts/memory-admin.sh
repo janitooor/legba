@@ -27,6 +27,13 @@ DB_FILE="${LOA_DIR}/memory.db"
 EMBED_SCRIPT="${PROJECT_ROOT}/.claude/hooks/memory-utils/embed.py"
 CONFIG_FILE="${PROJECT_ROOT}/.loa.config.yaml"
 
+# Python interpreter - prefer venv if available
+if [[ -x "${LOA_DIR}/venv/bin/python3" ]]; then
+    PYTHON="${LOA_DIR}/venv/bin/python3"
+else
+    PYTHON="python3"
+fi
+
 # Memory types
 VALID_TYPES=("gotcha" "pattern" "decision" "learning")
 
@@ -137,7 +144,7 @@ generate_embedding() {
 
     # Check if Python and sentence-transformers are available
     local check_result
-    check_result=$(python3 "$EMBED_SCRIPT" --check 2>/dev/null || echo '{"available": false}')
+    check_result=$("$PYTHON" "$EMBED_SCRIPT" --check 2>/dev/null || echo '{"available": false}')
 
     if ! echo "$check_result" | jq -e '.available' >/dev/null 2>&1; then
         log_error "Embedding service not available"
@@ -146,7 +153,7 @@ generate_embedding() {
     fi
 
     # Generate embedding
-    echo "$text" | python3 "$EMBED_SCRIPT"
+    echo "$text" | "$PYTHON" "$EMBED_SCRIPT"
 }
 
 # =============================================================================
@@ -293,7 +300,7 @@ cmd_add() {
     # Insert memory using Python for safe parameterized queries (HIGH-001 fix)
     log_info "Storing memory..."
     local memory_id
-    memory_id=$(python3 - "$DB_FILE" "$content" "$content_hash" "$memory_type" "$source" "$embedding" <<'PYTHON_SAFE_INSERT'
+    memory_id=$("$PYTHON" - "$DB_FILE" "$content" "$content_hash" "$memory_type" "$source" "$embedding" <<'PYTHON_SAFE_INSERT'
 import sys
 import sqlite3
 import json
@@ -361,7 +368,7 @@ cmd_list() {
     ensure_db_exists
 
     # Use Python for safe parameterized queries (HIGH-001 fix)
-    python3 - "$DB_FILE" "$memory_type" "$limit" <<'PYTHON_SAFE_LIST'
+    "$PYTHON" - "$DB_FILE" "$memory_type" "$limit" <<'PYTHON_SAFE_LIST'
 import sys
 import sqlite3
 import json
@@ -460,7 +467,7 @@ cmd_search() {
 
     # Perform similarity search using Python for cosine similarity
     # (Since we're not using sqlite-vss, we compute similarity in Python)
-    python3 - "$DB_FILE" "$query_embedding" "$top_k" "$threshold" <<'PYTHON_SCRIPT'
+    "$PYTHON" - "$DB_FILE" "$query_embedding" "$top_k" "$threshold" <<'PYTHON_SCRIPT'
 import sys
 import sqlite3
 import json
@@ -526,7 +533,7 @@ PYTHON_SCRIPT
     # Log search to history using safe parameterized query (HIGH-001 fix)
     local query_preview
     query_preview=$(echo "$query" | head -c 50)
-    python3 - "$DB_FILE" "$query_hash" "$query_preview" <<'PYTHON_LOG_SEARCH'
+    "$PYTHON" - "$DB_FILE" "$query_hash" "$query_preview" <<'PYTHON_LOG_SEARCH'
 import sys
 import sqlite3
 
@@ -564,7 +571,7 @@ cmd_delete() {
 
     # Check if exists and delete using safe parameterized query (HIGH-001 fix)
     local result
-    result=$(python3 - "$DB_FILE" "$id" <<'PYTHON_SAFE_DELETE'
+    result=$("$PYTHON" - "$DB_FILE" "$id" <<'PYTHON_SAFE_DELETE'
 import sys
 import sqlite3
 
@@ -729,7 +736,7 @@ cmd_prune() {
 
     # Use Python for safe parameterized prune (HIGH-001 fix)
     local result
-    result=$(python3 - "$DB_FILE" "${older_than:-0}" "${min_matches:--1}" "$dry_run" <<'PYTHON_SAFE_PRUNE'
+    result=$("$PYTHON" - "$DB_FILE" "${older_than:-0}" "${min_matches:--1}" "$dry_run" <<'PYTHON_SAFE_PRUNE'
 import sys
 import sqlite3
 import json

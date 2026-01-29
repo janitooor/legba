@@ -85,13 +85,19 @@ check_dependencies() {
         all_ok=false
     fi
 
-    # sentence-transformers
-    if python3 -c "import sentence_transformers" 2>/dev/null; then
+    # sentence-transformers (check venv first, then system)
+    local python_cmd="python3"
+    if [[ -x "${LOA_DIR}/venv/bin/python3" ]]; then
+        python_cmd="${LOA_DIR}/venv/bin/python3"
+        log_ok "Using venv Python: ${LOA_DIR}/venv/bin/python3"
+    fi
+
+    if "$python_cmd" -c "import sentence_transformers" 2>/dev/null; then
         log_ok "sentence-transformers installed"
     else
         log_warn "sentence-transformers not installed"
         echo ""
-        echo -e "    Install with: ${BOLD}pip install sentence-transformers${NC}"
+        echo -e "    Install with: ${BOLD}python3 -m venv .loa/venv && .loa/venv/bin/pip install sentence-transformers${NC}"
         echo ""
         all_ok=false
     fi
@@ -179,9 +185,14 @@ test_embeddings() {
         return 1
     fi
 
-    # Test embedding generation
+    # Test embedding generation (use venv if available)
+    local python_cmd="python3"
+    if [[ -x "${LOA_DIR}/venv/bin/python3" ]]; then
+        python_cmd="${LOA_DIR}/venv/bin/python3"
+    fi
+
     local test_result
-    if test_result=$(echo "test embedding" | python3 "$EMBED_SCRIPT" 2>/dev/null); then
+    if test_result=$(echo "test embedding" | "$python_cmd" "$EMBED_SCRIPT" 2>/dev/null); then
         local dim
         dim=$(echo "$test_result" | jq -r '.embedding | length' 2>/dev/null || echo "0")
         if [[ "$dim" == "384" ]]; then
