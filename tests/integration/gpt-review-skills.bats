@@ -1,159 +1,162 @@
 #!/usr/bin/env bats
 # Tests for GPT review skill integration
 #
-# Verifies that GPT review instructions are conditionally loaded.
-# When enabled: context file created with gate instructions.
-# When disabled: context file removed, skills don't have gates inline.
+# Verifies that GPT review gates are dynamically injected into skill files
+# based on config. When enabled: gates are injected. When disabled: removed.
 
 setup() {
     SCRIPT_DIR="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
     PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
     SKILLS_DIR="$PROJECT_ROOT/.claude/skills"
-    TEMPLATE_FILE="$PROJECT_ROOT/.claude/templates/gpt-review-instructions.md.template"
+    INJECT_SCRIPT="$PROJECT_ROOT/.claude/scripts/inject-gpt-review-gates.sh"
     TOGGLE_SCRIPT="$PROJECT_ROOT/.claude/scripts/toggle-gpt-review-context.sh"
-    CONTEXT_FILE="$PROJECT_ROOT/.claude/context/gpt-review-active.md"
     FIXTURES_DIR="$PROJECT_ROOT/tests/fixtures/gpt-review"
 
     # Create temp directory for test-specific files
     TEST_DIR="${BATS_TEST_TMPDIR:-$(mktemp -d)}"
+
+    # Backup original skill files
+    for skill in discovering-requirements designing-architecture planning-sprints implementing-tasks; do
+        cp "$SKILLS_DIR/$skill/SKILL.md" "$TEST_DIR/${skill}-SKILL.md.bak"
+    done
+}
+
+teardown() {
+    # Restore original skill files
+    for skill in discovering-requirements designing-architecture planning-sprints implementing-tasks; do
+        if [[ -f "$TEST_DIR/${skill}-SKILL.md.bak" ]]; then
+            cp "$TEST_DIR/${skill}-SKILL.md.bak" "$SKILLS_DIR/$skill/SKILL.md"
+        fi
+    done
 }
 
 # =============================================================================
-# Template file tests (gates live in template, not skills)
+# Inject script tests
 # =============================================================================
 
-@test "GPT review template file exists" {
-    [[ -f "$TEMPLATE_FILE" ]]
+@test "inject script exists and is executable" {
+    [[ -x "$INJECT_SCRIPT" ]]
 }
 
-@test "template has PRD review invocation" {
-    run grep -q "gpt-review-api.sh prd" "$TEMPLATE_FILE"
+@test "inject script adds gates when enabled" {
+    # Setup: copy enabled config to project root
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+
+    # Run inject
+    run "$INJECT_SCRIPT"
     [[ "$status" -eq 0 ]]
+
+    # Check gates were added
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/designing-architecture/SKILL.md"
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/planning-sprints/SKILL.md"
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/implementing-tasks/SKILL.md"
+
+    # Cleanup
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "template has SDD review invocation" {
-    run grep -q "gpt-review-api.sh sdd" "$TEMPLATE_FILE"
+@test "inject script removes gates when disabled" {
+    # Setup: first add gates
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    # Verify gates exist
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+
+    # Now disable
+    cp "$FIXTURES_DIR/configs/disabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    run "$INJECT_SCRIPT"
     [[ "$status" -eq 0 ]]
+
+    # Check gates were removed
+    ! grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+    ! grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/designing-architecture/SKILL.md"
+    ! grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/planning-sprints/SKILL.md"
+    ! grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/implementing-tasks/SKILL.md"
+
+    # Cleanup
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "template has Sprint review invocation" {
-    run grep -q "gpt-review-api.sh sprint" "$TEMPLATE_FILE"
+@test "inject script removes gates when config missing" {
+    # Setup: first add gates
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    # Verify gates exist
+    grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+
+    # Remove config
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+    run "$INJECT_SCRIPT"
     [[ "$status" -eq 0 ]]
+
+    # Check gates were removed
+    ! grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
 }
 
-@test "template has code review invocation" {
-    run grep -q "gpt-review-api.sh code" "$TEMPLATE_FILE"
-    [[ "$status" -eq 0 ]]
+@test "injected PRD gate has correct invocation" {
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    grep -q "gpt-review-api.sh prd" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "template documents all verdicts" {
-    run grep -q "APPROVED" "$TEMPLATE_FILE"
-    [[ "$status" -eq 0 ]]
-    run grep -q "CHANGES_REQUIRED" "$TEMPLATE_FILE"
-    [[ "$status" -eq 0 ]]
-    run grep -q "DECISION_NEEDED" "$TEMPLATE_FILE"
-    [[ "$status" -eq 0 ]]
+@test "injected SDD gate has correct invocation" {
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    grep -q "gpt-review-api.sh sdd" "$SKILLS_DIR/designing-architecture/SKILL.md"
+
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+}
+
+@test "injected Sprint gate has correct invocation" {
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    grep -q "gpt-review-api.sh sprint" "$SKILLS_DIR/planning-sprints/SKILL.md"
+
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+}
+
+@test "injected Code gate has correct invocation" {
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+    "$INJECT_SCRIPT"
+
+    grep -q "gpt-review-api.sh code" "$SKILLS_DIR/implementing-tasks/SKILL.md"
+
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
+}
+
+@test "inject is idempotent - running twice doesn't duplicate gates" {
+    cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
+
+    # Run twice
+    "$INJECT_SCRIPT"
+    "$INJECT_SCRIPT"
+
+    # Count occurrences - should be exactly 1
+    local count
+    count=$(grep -c "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md")
+    [[ "$count" -eq 1 ]]
+
+    rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
 # =============================================================================
-# Skill files should NOT have gates inline (token optimization)
+# SessionStart hook configuration tests
 # =============================================================================
 
-@test "discovering-requirements skill exists" {
-    [[ -f "$SKILLS_DIR/discovering-requirements/SKILL.md" ]]
+@test "inject script is registered in SessionStart hook" {
+    grep -q "inject-gpt-review-gates.sh" "$PROJECT_ROOT/.claude/settings.json"
 }
 
-@test "discovering-requirements does NOT have gpt_review_gate inline" {
-    run grep -q "<gpt_review_gate>" "$SKILLS_DIR/discovering-requirements/SKILL.md"
-    [[ "$status" -ne 0 ]]
-}
-
-@test "designing-architecture skill exists" {
-    [[ -f "$SKILLS_DIR/designing-architecture/SKILL.md" ]]
-}
-
-@test "designing-architecture does NOT have gpt_review_gate inline" {
-    run grep -q "<gpt_review_gate>" "$SKILLS_DIR/designing-architecture/SKILL.md"
-    [[ "$status" -ne 0 ]]
-}
-
-@test "planning-sprints skill exists" {
-    [[ -f "$SKILLS_DIR/planning-sprints/SKILL.md" ]]
-}
-
-@test "planning-sprints does NOT have gpt_review_gate inline" {
-    run grep -q "<gpt_review_gate>" "$SKILLS_DIR/planning-sprints/SKILL.md"
-    [[ "$status" -ne 0 ]]
-}
-
-@test "implementing-tasks skill exists" {
-    [[ -f "$SKILLS_DIR/implementing-tasks/SKILL.md" ]]
-}
-
-@test "implementing-tasks does NOT have gpt_review_gate inline" {
-    run grep -q "<gpt_review_gate" "$SKILLS_DIR/implementing-tasks/SKILL.md"
-    [[ "$status" -ne 0 ]]
-}
-
-# =============================================================================
-# Context toggle tests
-# =============================================================================
-
-@test "toggle script exists and is executable" {
-    [[ -x "$TOGGLE_SCRIPT" ]]
-}
-
-@test "toggle creates context file when enabled" {
-    # Setup test environment
-    mkdir -p "$TEST_DIR/.claude/templates"
-    mkdir -p "$TEST_DIR/.claude/context"
-    mkdir -p "$TEST_DIR/.claude/scripts"
-    cp "$TEMPLATE_FILE" "$TEST_DIR/.claude/templates/gpt-review-instructions.md.template"
-    cp "$TOGGLE_SCRIPT" "$TEST_DIR/.claude/scripts/toggle-gpt-review-context.sh"
-
-    # Create enabled config
-    cp "$FIXTURES_DIR/configs/enabled.yaml" "$TEST_DIR/.loa.config.yaml"
-
-    cd "$TEST_DIR"
-    run .claude/scripts/toggle-gpt-review-context.sh
-    [[ "$status" -eq 0 ]]
-    [[ -f "$TEST_DIR/.claude/context/gpt-review-active.md" ]]
-}
-
-@test "toggle removes context file when disabled" {
-    # Setup test environment
-    mkdir -p "$TEST_DIR/.claude/templates"
-    mkdir -p "$TEST_DIR/.claude/context"
-    mkdir -p "$TEST_DIR/.claude/scripts"
-    cp "$TEMPLATE_FILE" "$TEST_DIR/.claude/templates/gpt-review-instructions.md.template"
-    cp "$TOGGLE_SCRIPT" "$TEST_DIR/.claude/scripts/toggle-gpt-review-context.sh"
-
-    # Create a pre-existing context file
-    echo "# Old content" > "$TEST_DIR/.claude/context/gpt-review-active.md"
-
-    # Create disabled config
-    cp "$FIXTURES_DIR/configs/disabled.yaml" "$TEST_DIR/.loa.config.yaml"
-
-    cd "$TEST_DIR"
-    run .claude/scripts/toggle-gpt-review-context.sh
-    [[ "$status" -eq 0 ]]
-    [[ ! -f "$TEST_DIR/.claude/context/gpt-review-active.md" ]]
-}
-
-@test "toggle removes context file when config missing" {
-    # Setup test environment (no config file)
-    mkdir -p "$TEST_DIR/.claude/templates"
-    mkdir -p "$TEST_DIR/.claude/context"
-    mkdir -p "$TEST_DIR/.claude/scripts"
-    cp "$TOGGLE_SCRIPT" "$TEST_DIR/.claude/scripts/toggle-gpt-review-context.sh"
-
-    # Create a pre-existing context file
-    echo "# Old content" > "$TEST_DIR/.claude/context/gpt-review-active.md"
-
-    cd "$TEST_DIR"
-    run .claude/scripts/toggle-gpt-review-context.sh
-    [[ "$status" -eq 0 ]]
-    [[ ! -f "$TEST_DIR/.claude/context/gpt-review-active.md" ]]
+@test "toggle script is registered in SessionStart hook" {
+    grep -q "toggle-gpt-review-context.sh" "$PROJECT_ROOT/.claude/settings.json"
 }
 
 # =============================================================================
@@ -168,12 +171,10 @@ setup() {
     [[ -f "$PROJECT_ROOT/.claude/commands/gpt-review.md" ]]
 }
 
-@test "SessionStart hook runs toggle script" {
-    run grep -q "toggle-gpt-review-context.sh" "$PROJECT_ROOT/.claude/settings.json"
-    [[ "$status" -eq 0 ]]
+@test "/toggle-gpt-review command definition exists" {
+    [[ -f "$PROJECT_ROOT/.claude/commands/toggle-gpt-review.md" ]]
 }
 
 @test "PostToolUse hook for code files exists" {
-    run grep -q "auto-gpt-review-hook.sh" "$PROJECT_ROOT/.claude/settings.json"
-    [[ "$status" -eq 0 ]]
+    grep -q "auto-gpt-review-hook.sh" "$PROJECT_ROOT/.claude/settings.json"
 }
