@@ -6,6 +6,7 @@ Cross-model review using GPT 5.2 to catch issues Claude might miss.
 
 ```bash
 /gpt-review <type> [file]
+/gpt-review toggle
 ```
 
 **Types:**
@@ -13,13 +14,46 @@ Cross-model review using GPT 5.2 to catch issues Claude might miss.
 - `prd` - Review Product Requirements Document
 - `sdd` - Review Software Design Document
 - `sprint` - Review Sprint Plan
+- `toggle` - Toggle GPT review on/off
 
 **Examples:**
 ```bash
+/gpt-review toggle                  # Toggle enabled/disabled
 /gpt-review code                    # Review git diff
 /gpt-review code src/auth.ts        # Review specific file
 /gpt-review prd                     # Review grimoires/loa/prd.md
 /gpt-review sdd grimoires/loa/sdd.md  # Review specific SDD
+```
+
+## Toggle Command
+
+The `toggle` subcommand flips the `gpt_review.enabled` setting in `.loa.config.yaml`:
+
+```bash
+/gpt-review toggle
+```
+
+**What it does:**
+1. Reads current `gpt_review.enabled` value from `.loa.config.yaml`
+2. Flips it: `true` → `false` or `false` → `true`
+3. Updates the context file (creates or removes `.claude/context/gpt-review-active.md`)
+4. Reports the new state
+
+**Execution:**
+```bash
+# Check current state
+current=$(yq eval '.gpt_review.enabled // false' .loa.config.yaml)
+
+# Toggle it
+if [[ "$current" == "true" ]]; then
+  yq eval -i '.gpt_review.enabled = false' .loa.config.yaml
+  rm -f .claude/context/gpt-review-active.md
+  echo "GPT Review: DISABLED"
+else
+  yq eval -i '.gpt_review.enabled = true' .loa.config.yaml
+  .claude/scripts/toggle-gpt-review-context.sh
+  echo "GPT Review: ENABLED"
+fi
 ```
 
 ## How It Works
