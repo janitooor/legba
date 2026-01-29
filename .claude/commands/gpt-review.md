@@ -6,7 +6,6 @@ Cross-model review using GPT 5.2 to catch issues Claude might miss.
 
 ```bash
 /gpt-review <type> [file]
-/gpt-review toggle
 ```
 
 **Types:**
@@ -14,33 +13,16 @@ Cross-model review using GPT 5.2 to catch issues Claude might miss.
 - `prd` - Review Product Requirements Document
 - `sdd` - Review Software Design Document
 - `sprint` - Review Sprint Plan
-- `toggle` - Toggle GPT review on/off
 
 **Examples:**
 ```bash
-/gpt-review toggle                  # Toggle enabled/disabled
 /gpt-review code                    # Review git diff
 /gpt-review code src/auth.ts        # Review specific file
 /gpt-review prd                     # Review grimoires/loa/prd.md
 /gpt-review sdd grimoires/loa/sdd.md  # Review specific SDD
 ```
 
-## Toggle Command
-
-The `toggle` subcommand flips the `gpt_review.enabled` setting in `.loa.config.yaml`.
-
-**Just run the script:**
-```bash
-.claude/scripts/gpt-review-toggle.sh
-```
-
-The script handles everything automatically:
-- Adds `gpt_review.enabled` to config if missing
-- Flips the value: `true` → `false` or `false` → `true`
-- Creates/removes the context file
-- Reports the new state
-
-**After toggling:** Restart Claude session for the context file changes to take effect.
+**To enable/disable:** Use `/toggle-gpt-review`
 
 ## How It Works
 
