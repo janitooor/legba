@@ -104,9 +104,23 @@ check_config_enabled() {
   fi
 
   # Check phase-specific flag
-  local phase_enabled
-  phase_enabled=$(yq eval ".gpt_review.phases.${phase_key} // true" "$CONFIG_FILE" 2>/dev/null || echo "true")
-  if [[ "$phase_enabled" != "true" ]]; then
+  # NOTE: yq's // operator treats boolean false as falsy, so we must NOT use it
+  # Instead, check if the key exists and get its raw value
+  local phase_raw phase_enabled
+  # First check if the key exists (returns "true" or "false" for existence)
+  local key_exists
+  key_exists=$(yq eval ".gpt_review.phases | has(\"${phase_key}\")" "$CONFIG_FILE" 2>/dev/null || echo "false")
+  if [[ "$key_exists" == "true" ]]; then
+    # Key exists, get its actual value
+    phase_raw=$(yq eval ".gpt_review.phases.${phase_key}" "$CONFIG_FILE" 2>/dev/null || echo "true")
+  else
+    # Key doesn't exist, default to enabled (true)
+    phase_raw="true"
+  fi
+  # Normalize to lowercase for case-insensitive comparison
+  phase_enabled=$(echo "$phase_raw" | tr '[:upper:]' '[:lower:]')
+  # Check for any false-like value (false, no, off, 0)
+  if [[ "$phase_enabled" == "false" || "$phase_enabled" == "no" || "$phase_enabled" == "off" || "$phase_enabled" == "0" ]]; then
     return 1
   fi
 

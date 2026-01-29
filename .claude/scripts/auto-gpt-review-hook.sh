@@ -1,28 +1,40 @@
 #!/usr/bin/env bash
-# Auto GPT Review Hook - Outputs reminder after code changes
-# Only outputs if GPT review is enabled in config
+# PostToolUse Hook - Outputs JSON reminder for GPT review
+# Claude sees additionalContext; plain echo is invisible to Claude
+#
+# IMPORTANT: Hook must consume stdin to avoid hanging (hooks receive JSON input)
+
+# Consume stdin immediately (hooks receive JSON input, ignoring it is fine)
+cat > /dev/null
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../../.loa.config.yaml"
 
-# Check if GPT review is enabled - exit silently if not
+# Silent exit if yq missing
 if ! command -v yq &>/dev/null; then
   exit 0
 fi
 
+# Silent exit if config missing
 if [[ ! -f "$CONFIG_FILE" ]]; then
   exit 0
 fi
 
+# Check if GPT review is enabled
 enabled=$(yq eval '.gpt_review.enabled // false' "$CONFIG_FILE" 2>/dev/null || echo "false")
 if [[ "$enabled" != "true" ]]; then
   exit 0
 fi
 
-# GPT review is enabled - output reminder
-echo ""
-echo ">> GPT Review: Run .claude/scripts/gpt-review-api.sh code <file> on changed files"
-echo "   For re-reviews after fixes, use: --iteration N --previous /tmp/gpt-review-findings-{N-1}.json"
-echo ""
+# GPT review is enabled - output JSON that Claude will see
+# The additionalContext field is injected into Claude's conversation context
+cat << 'EOF'
+{
+  "hookSpecificOutput": {
+    "hookEventName": "PostToolUse",
+    "additionalContext": "Code file modified. If your changes were complex, consider running /gpt-review code on the modified files to catch issues."
+  }
+}
+EOF
 
 exit 0
