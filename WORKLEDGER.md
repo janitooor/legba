@@ -22,7 +22,7 @@
 
 | ID | Task | Target | Priority | Research Source |
 |----|------|--------|----------|-----------------|
-| W-003 | Tool Result Clearing integration | loa | High | loa protocols |
+| W-003 | Tool Result Clearing integration | loa | 🔵 Scoped | - |
 | W-004 | Semantic chunking for memory | Clawdbot | Medium | Architecture analysis |
 | W-005 | Session auto-extract | Clawdbot | Medium | Hesam thread |
 | W-006 | Memory consolidation job | Clawdbot | Low | loa patterns |
@@ -74,4 +74,4 @@
 
 ---
 
-*Last updated: 2026-02-02T06:00:00Z*
+*Last updated: 2026-02-03T06:00:00Z*

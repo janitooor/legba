@@ -144,3 +144,28 @@ Submitted PR for time-based decay in memory search:
 - Disabled by default (non-breaking)
 
 Note: PR adds scoring infrastructure. Follow-up needed to wire `createdAt` from storage layer.
+
+---
+
+## 2026-02-03 — Scope Day
+
+### 📋 Scoped
+
+#### W-003: Tool Result Clearing Integration
+**Target:** loa  
+**Assessment:** [scope-assessment.md](grimoires/loa-trc/scope-assessment.md)
+
+**Current state:** Protocol exists but not integrated into skills
+
+**Gaps identified:**
+- No automated enforcement
+- Skills don't reference TRC
+- No trajectory schema validation
+
+**Proposed solution:** Add `<attention_budget>` section to high-search skills:
+- auditing-security
+- discovering-requirements
+- riding-codebase
+- implementing-tasks
+
+**Tomorrow (Tue 04):** Implementation
