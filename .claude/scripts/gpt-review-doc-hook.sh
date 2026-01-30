@@ -3,12 +3,34 @@
 # Triggers when PRD, SDD, or sprint documents are created/modified
 #
 # IMPORTANT: Hook must consume stdin to avoid hanging (hooks receive JSON input)
-
-# Consume stdin immediately
-cat > /dev/null
+# The matcher is now just "Edit|Write" so we filter by file path here.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/../../.loa.config.yaml"
+
+# Read stdin JSON input (contains tool_input.file_path)
+INPUT=$(cat)
+
+# Extract file path from JSON input
+FILE_PATH=""
+if command -v jq &>/dev/null; then
+  FILE_PATH=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty' 2>/dev/null)
+fi
+
+# Determine document type from file path
+DOC_TYPE=""
+if [[ "$FILE_PATH" =~ prd\.md$ ]]; then
+  DOC_TYPE="prd"
+elif [[ "$FILE_PATH" =~ sdd\.md$ ]]; then
+  DOC_TYPE="sdd"
+elif [[ "$FILE_PATH" =~ sprint\.md$ ]]; then
+  DOC_TYPE="sprint"
+fi
+
+# Skip if not a design document
+if [[ -z "$DOC_TYPE" ]]; then
+  exit 0
+fi
 
 # Silent exit if yq missing
 if ! command -v yq &>/dev/null; then
@@ -24,17 +46,6 @@ fi
 enabled=$(yq eval '.gpt_review.enabled // false' "$CONFIG_FILE" 2>/dev/null || echo "false")
 if [[ "$enabled" != "true" ]]; then
   exit 0
-fi
-
-# Determine document type from the tool invocation path
-# The matcher captures the filename in the path
-DOC_TYPE=""
-if [[ "${CLAUDE_TOOL_ARG:-}" =~ prd\.md ]]; then
-  DOC_TYPE="prd"
-elif [[ "${CLAUDE_TOOL_ARG:-}" =~ sdd\.md ]]; then
-  DOC_TYPE="sdd"
-elif [[ "${CLAUDE_TOOL_ARG:-}" =~ sprint\.md ]]; then
-  DOC_TYPE="sprint"
 fi
 
 # GPT review is enabled - output JSON that Claude will see

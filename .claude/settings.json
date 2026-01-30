@@ -469,7 +469,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "(Edit|Write).*\\.(ts|tsx|js|jsx|py|go|rs|java|c|cpp|rb|php|swift|kt|sh)$",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",
@@ -478,7 +478,7 @@
         ]
       },
       {
-        "matcher": "(Edit|Write).*(prd|sdd|sprint)\\.md$",
+        "matcher": "Edit|Write",
         "hooks": [
           {
             "type": "command",

@@ -172,10 +172,22 @@ RUN_CMD_GATE="## GPT Cross-Model Review (MANDATORY)
 CLAUDE_MD_BANNER='---
 ## ⚠️ GPT CROSS-MODEL REVIEW IS ENABLED
 
-You MUST run GPT review after significant code changes. Use your judgment:
+You MUST run GPT review after significant code changes. Use judgment based on **CODE COMPLEXITY**, not velocity.
 
-**ALWAYS review**: New files, major refactors, security-sensitive code, API changes
-**SKIP review**: Typo fixes, comment changes, trivial one-liners
+**IMPORTANT**: Never skip reviews to save time or maintain momentum. The review exists to catch bugs you might miss. If you'\''ve written non-trivial code, review it - even if you'\''re mid-sprint and want to keep moving.
+
+**ALWAYS review** (regardless of how long it takes):
+- New files (components, hooks, API routes, utilities)
+- Major refactors or architectural changes
+- Security-sensitive code (auth, validation, data handling)
+- API changes (request/response shapes, error handling)
+- Complex logic (state machines, algorithms, data transformations)
+
+**SKIP review** (truly trivial changes only):
+- Typo fixes in strings/comments
+- Import reordering
+- Single-line obvious fixes (e.g., `s/fooBar/foobar/`)
+- Adding/removing console.log statements
 
 ### How to Run GPT Review
 
