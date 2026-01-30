@@ -4,6 +4,30 @@
 Execute autonomous work with exhaustive loa process compliance, mandatory quality gates, self-auditing, remediation loops, and continuous improvement. Match human-level discernment and quality on every deliverable.
 </objective>
 
+<issue_integrations>
+## Issue Integrations
+
+This skill incorporates solutions from open Loa issues:
+
+| Issue | Title | Integration |
+|-------|-------|-------------|
+| #71 | Unix Philosophy | `construct.yaml` with input/output contracts per phase |
+| #70 | construct.yaml manifest | Full manifest with skills, execution order, gates |
+| #29 | PRD Iteration Loop | Phase 7 includes PRD gap check and /refine-prd trigger |
+| #48 | Feedback Protocol | Phase 7 captures learnings in structured YAML |
+| #23 | NOTES.md cleanup | Structured note format with types and expiry |
+
+### Resources
+
+- `construct.yaml` - Skill packaging manifest (#70, #71)
+- `resources/operator-detection.md` - AI/human adaptation
+- `resources/feedback-protocol.md` - Upstream learning flow (#48)
+- `resources/prd-iteration.md` - PRD refinement loop (#29)
+- `resources/structured-notes.md` - Note format with expiry (#23)
+- `resources/phase-checklist.md` - Completion criteria
+- `resources/quality-gates.md` - Gate definitions
+</issue_integrations>
+
 <prime_directive>
 ## Prime Directive
 
@@ -485,7 +509,12 @@ IF audit-deploy fails:
 <phase_7_learning>
 ## Phase 7: Learning
 
-**Purpose:** Improve from experience.
+**Purpose:** Improve from experience, iterate on PRD, feed learnings upstream.
+
+See also:
+- `resources/prd-iteration.md` (Issue #29)
+- `resources/feedback-protocol.md` (Issue #48)
+- `resources/structured-notes.md` (Issue #23)
 
 ### 7.1 Extract Learnings
 
@@ -495,38 +524,77 @@ Review execution:
 - What required remediation?
 - New patterns discovered?
 - Process improvements?
+- Implementation gaps vs PRD?
 ```
 
-### 7.2 Update Memory
+### 7.2 PRD Iteration Check (Issue #29)
 
 ```markdown
-1. Update NOTES.md with session summary
-2. If significant learning:
-   - Update MEMORY.md
-   - Consider skill improvements
-3. Feed to /continuous-learning
+1. Parse trajectory for deviations from PRD
+2. Identify gaps:
+   - Requirements not fully met
+   - Features added not in PRD
+   - Better approaches discovered
+3. Classify: major | minor
+4. Decision:
+   - Major gaps → invoke /refine-prd OR escalate
+   - Minor gaps → log to NOTES.md for future
 ```
 
-### 7.3 Archive Trajectory
+### 7.3 Capture Feedback (Issue #48)
+
+```markdown
+1. Generate feedback entries:
+   - Gaps → type: gap
+   - Friction points → type: friction
+   - Patterns observed → type: pattern
+   - Improvement ideas → type: improvement
+2. Write to grimoires/loa/feedback/{date}.yaml
+3. Classify target: loa | clawdbot | skill:{name}
+4. Log to trajectory
+```
+
+### 7.4 Update Memory (Issue #23)
+
+```markdown
+1. Create structured notes for significant items:
+   - type: decision (never expires)
+   - type: observation (14 day check)
+   - type: synthesis (7 day expiry)
+2. Update NOTES.md with session summary
+3. If significant learning:
+   - Update MEMORY.md
+   - Consider skill improvements
+4. Feed to /continuous-learning
+```
+
+### 7.5 Archive Trajectory
 
 ```markdown
 1. Close trajectory log
 2. Archive to trajectory/{date}.jsonl
-3. Clear working memory
+3. Clear working memory (apply semantic decay)
 ```
 
-### 7.4 Prepare Next
+### 7.6 Prepare Next
 
 ```markdown
 1. Mark work item complete in WORKLEDGER.md
 2. Update CHANGELOG.md
 3. Commit workspace updates
-4. Ready for next work item
+4. If /refine-prd was invoked:
+   - Wait for new sprint.md
+   - Add new sprints to work queue
+5. Ready for next work item
 ```
 
 ### Exit Criteria
-- [ ] Learnings documented
+- [ ] Learnings extracted
+- [ ] PRD iteration check complete
+- [ ] Feedback captured for upstream
+- [ ] Structured notes created
 - [ ] Trajectory archived
+- [ ] Work item marked complete
 - [ ] Work item marked complete
 - [ ] Ready for next cycle
 </phase_7_learning>

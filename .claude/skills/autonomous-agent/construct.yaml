@@ -1,0 +1,142 @@
+# construct.yaml - Issue #70 Implementation
+# Packages the autonomous-agent skill with its dependencies
+
+name: autonomous-agent
+version: 1.0.0
+description: |
+  Meta-orchestrator for exhaustive Loa process compliance.
+  Auto-detects AI operators and enforces quality gates.
+author: Legba
+license: MIT
+
+# Skills included in this construct (addresses #70)
+skills:
+  # Phase 1: Discovery
+  - name: riding-codebase
+    version: ">=1.0.0"
+    required: true
+    phase: discovery
+    
+  - name: discovering-requirements
+    version: ">=1.0.0"
+    required: true
+    phase: discovery
+    
+  # Phase 2: Design
+  - name: designing-architecture
+    version: ">=1.0.0"
+    required: true
+    phase: design
+    
+  - name: planning-sprints
+    version: ">=1.0.0"
+    required: true
+    phase: design
+    
+  # Phase 3: Implementation
+  - name: implementing-tasks
+    version: ">=1.0.0"
+    required: true
+    phase: implementation
+    
+  # Phase 4: Quality
+  - name: auditing-security
+    version: ">=1.0.0"
+    required: true
+    phase: quality
+    
+  - name: reviewing-code
+    version: ">=1.0.0"
+    required: false
+    phase: quality
+    
+  # Phase 6: Deployment
+  - name: deploying-infrastructure
+    version: ">=1.0.0"
+    required: false
+    phase: deployment
+    
+  # Phase 7: Learning
+  - name: continuous-learning
+    version: ">=1.0.0"
+    required: false
+    phase: learning
+
+# Execution order (addresses #71 - composability)
+execution:
+  type: sequential
+  phases:
+    - discovery
+    - design
+    - implementation
+    - quality
+    - deployment
+    - learning
+  
+  # Each phase must complete before next
+  gates:
+    discovery: prd_complete
+    design: sdd_complete
+    implementation: tests_passing
+    quality: audit_pass
+    deployment: health_check_pass
+
+# Input/Output contracts (addresses #71 - Unix philosophy)
+contracts:
+  discovery:
+    inputs:
+      - context/*.md
+      - WORKLEDGER.md
+    outputs:
+      - grimoires/{project}/prd.md
+    exit_codes:
+      0: success
+      1: incomplete
+      2: blocked
+      
+  design:
+    inputs:
+      - grimoires/{project}/prd.md
+    outputs:
+      - grimoires/{project}/sdd.md
+      - grimoires/{project}/sprint.md
+    exit_codes:
+      0: success
+      1: incomplete
+      
+  implementation:
+    inputs:
+      - grimoires/{project}/sdd.md
+      - grimoires/{project}/sprint.md
+    outputs:
+      - src/**/*
+      - tests/**/*
+    exit_codes:
+      0: success
+      1: partial
+      2: failed
+      
+  quality:
+    inputs:
+      - src/**/*
+      - tests/**/*
+    outputs:
+      - grimoires/{project}/audit-report.md
+    exit_codes:
+      0: pass
+      1: fail_remediable
+      2: fail_escalate
+
+# Checkpoint files (addresses #71 - composability)
+checkpoints:
+  location: .loa-checkpoint/
+  format: yaml
+  example: |
+    # .loa-checkpoint/autonomous-agent.yaml
+    phase: quality
+    status: in_progress
+    started: 2026-01-30T22:00:00Z
+    outputs_ready:
+      - grimoires/project/prd.md
+      - grimoires/project/sdd.md
+    next_phase: deployment
