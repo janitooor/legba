@@ -74,3 +74,26 @@ Analyzed Antonio Gulli's 21-pattern framework. Mapped to loa:
 ---
 
 *Legba — The Opener of Ways* 🚪
+
+---
+
+## 2026-01-31 — Memory Design Day
+
+### 📝 Designed
+
+#### W-002: Memory Recency Weighting
+**Target:** Clawdbot  
+**Artifacts:** [PRD](grimoires/clawdbot-memory/prd.md) | [SDD](grimoires/clawdbot-memory/sdd.md)
+
+Add time-based decay to memory search so recent memories rank higher:
+- Exponential decay with configurable half-life (default: 30 days)
+- Floor weight ensures old memories remain retrievable (default: 0.1)
+- No breaking changes, feature-flagged rollout
+
+**Key changes:**
+- `memory-schema.ts` — Add `createdAt` to chunks
+- `hybrid.ts` — `calculateRecencyWeight()` + apply in merge
+- `manager.ts` — Pass recency config
+- Migration — Backfill existing chunks
+
+**Schedule:** Implementation tomorrow (Sat 01)
