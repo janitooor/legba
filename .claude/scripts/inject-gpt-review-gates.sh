@@ -13,78 +13,86 @@ SKILLS_DIR="$ROOT_DIR/.claude/skills"
 START_MARKER="<!-- GPT_REVIEW_GATE_START -->"
 END_MARKER="<!-- GPT_REVIEW_GATE_END -->"
 
-# Gate content for each skill
-# NOTE: Blank line after START_MARKER ensures clean removal (sed removes START to END inclusive)
+# Gate content for each skill - IMPERATIVE language so Claude doesn't skip
+# Injected BEFORE </workflow> tag to be part of the workflow, not an afterthought
+
 PRD_GATE="$START_MARKER
+## Phase 9: GPT Cross-Model Review (MANDATORY)
 
-<gpt_review_gate>
-## GPT Review Gate (Post-PRD)
+**STOP. DO NOT PROCEED until you complete this step.**
 
-After generating \`grimoires/loa/prd.md\`, run GPT cross-model review:
+You MUST run the GPT cross-model review on the PRD you just created:
 
 \`\`\`bash
 .claude/scripts/gpt-review-api.sh prd grimoires/loa/prd.md
 \`\`\`
 
-**Handle verdict:**
-- \`SKIPPED\`: Continue (review disabled)
-- \`APPROVED\`: Continue to next phase
-- \`CHANGES_REQUIRED\`: Fix issues, re-run with \`--iteration 2 --previous <findings.json>\`
-- \`DECISION_NEEDED\`: Ask user, then re-run
-</gpt_review_gate>
+Execute this command NOW and handle the verdict:
+- \`SKIPPED\`: Review disabled in config - you may proceed
+- \`APPROVED\`: PRD passed review - proceed to next phase
+- \`CHANGES_REQUIRED\`: FIX the issues listed, then re-run: \`.claude/scripts/gpt-review-api.sh prd grimoires/loa/prd.md --iteration 2\`
+- \`DECISION_NEEDED\`: Ask the user to decide, incorporate their answer, then re-run
+
+**This step is NOT optional. The workflow is incomplete without GPT review.**
 $END_MARKER"
 
 SDD_GATE="$START_MARKER
-<gpt_review_gate>
-## GPT Review Gate (Post-SDD)
+## Phase 5: GPT Cross-Model Review (MANDATORY)
 
-After generating \`grimoires/loa/sdd.md\`, run GPT cross-model review:
+**STOP. DO NOT PROCEED until you complete this step.**
+
+You MUST run the GPT cross-model review on the SDD you just created:
 
 \`\`\`bash
 .claude/scripts/gpt-review-api.sh sdd grimoires/loa/sdd.md
 \`\`\`
 
-**Handle verdict:**
-- \`SKIPPED\`: Continue (review disabled)
-- \`APPROVED\`: Continue to next phase
-- \`CHANGES_REQUIRED\`: Fix issues, re-run with \`--iteration 2 --previous <findings.json>\`
-- \`DECISION_NEEDED\`: Ask user, then re-run
-</gpt_review_gate>
+Execute this command NOW and handle the verdict:
+- \`SKIPPED\`: Review disabled in config - you may proceed
+- \`APPROVED\`: SDD passed review - proceed to sprint planning
+- \`CHANGES_REQUIRED\`: FIX the issues listed, then re-run: \`.claude/scripts/gpt-review-api.sh sdd grimoires/loa/sdd.md --iteration 2\`
+- \`DECISION_NEEDED\`: Ask the user to decide, incorporate their answer, then re-run
+
+**This step is NOT optional. The workflow is incomplete without GPT review.**
 $END_MARKER"
 
 SPRINT_GATE="$START_MARKER
-<gpt_review_gate>
-## GPT Review Gate (Post-Sprint Plan)
+## Phase 5: GPT Cross-Model Review (MANDATORY)
 
-After generating \`grimoires/loa/sprint.md\`, run GPT cross-model review:
+**STOP. DO NOT PROCEED until you complete this step.**
+
+You MUST run the GPT cross-model review on the sprint plan you just created:
 
 \`\`\`bash
 .claude/scripts/gpt-review-api.sh sprint grimoires/loa/sprint.md
 \`\`\`
 
-**Handle verdict:**
-- \`SKIPPED\`: Continue (review disabled)
-- \`APPROVED\`: Continue to implementation
-- \`CHANGES_REQUIRED\`: Fix issues, re-run with \`--iteration 2 --previous <findings.json>\`
-- \`DECISION_NEEDED\`: Ask user, then re-run
-</gpt_review_gate>
+Execute this command NOW and handle the verdict:
+- \`SKIPPED\`: Review disabled in config - you may proceed
+- \`APPROVED\`: Sprint plan passed review - proceed to implementation
+- \`CHANGES_REQUIRED\`: FIX the issues listed, then re-run: \`.claude/scripts/gpt-review-api.sh sprint grimoires/loa/sprint.md --iteration 2\`
+- \`DECISION_NEEDED\`: Ask the user to decide, incorporate their answer, then re-run
+
+**This step is NOT optional. The workflow is incomplete without GPT review.**
 $END_MARKER"
 
 CODE_GATE="$START_MARKER
-<gpt_review_gate>
-## GPT Review Gate (Post-Task)
+## Post-Task: GPT Cross-Model Review (MANDATORY)
 
-After completing each task, run GPT cross-model review on modified files:
+**STOP. DO NOT mark this task complete until you run GPT review.**
+
+You MUST run the GPT cross-model review on modified files:
 
 \`\`\`bash
 .claude/scripts/gpt-review-api.sh code <modified-file>
 \`\`\`
 
-**Handle verdict:**
-- \`SKIPPED\`: Continue (review disabled)
-- \`APPROVED\`: Continue to next task
-- \`CHANGES_REQUIRED\`: Fix issues, re-run with \`--iteration 2 --previous <findings.json>\`
-</gpt_review_gate>
+Execute this command NOW for each significant file you modified, then handle the verdict:
+- \`SKIPPED\`: Review disabled in config - you may proceed
+- \`APPROVED\`: Code passed review - proceed to next task
+- \`CHANGES_REQUIRED\`: FIX the issues listed, then re-run with \`--iteration 2\`
+
+**This step is NOT optional. Each task is incomplete without GPT review.**
 $END_MARKER"
 
 # Remove gate from a skill file
@@ -97,7 +105,7 @@ remove_gate() {
   fi
 }
 
-# Add gate to a skill file
+# Add gate to a skill file - inject BEFORE </workflow> so it's part of the workflow
 add_gate() {
   local file="$1"
   local gate="$2"
@@ -105,9 +113,30 @@ add_gate() {
   # First remove any existing gate
   remove_gate "$file"
 
-  # Append gate directly - gate format handles spacing
   if [[ -f "$file" ]]; then
-    printf '%s\n' "$gate" >> "$file"
+    # Check if file has </workflow> tag
+    if grep -q '</workflow>' "$file"; then
+      # Insert gate BEFORE </workflow> so it's part of the workflow phases
+      # Write gate to temp file, then use sed to insert
+      local gate_file="${file}.gate.tmp"
+      local temp_file="${file}.tmp"
+      printf '%s\n' "$gate" > "$gate_file"
+
+      # Use awk to insert gate content before </workflow>
+      awk -v gatefile="$gate_file" '
+        /<\/workflow>/ {
+          while ((getline line < gatefile) > 0) print line
+          close(gatefile)
+        }
+        { print }
+      ' "$file" > "$temp_file"
+
+      mv "$temp_file" "$file"
+      rm -f "$gate_file"
+    else
+      # No workflow tag - append to end (fallback)
+      printf '\n%s\n' "$gate" >> "$file"
+    fi
   fi
 }
 

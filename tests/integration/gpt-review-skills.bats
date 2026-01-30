@@ -114,13 +114,7 @@ teardown() {
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "injection only adds gate content - rest of skill unchanged" {
-    # Store original line count and content checksum (excluding last line for trailing newline)
-    local orig_lines orig_content
-    orig_lines=$(wc -l < "$TEST_DIR/discovering-requirements-SKILL.md.bak")
-    # Get content without potential trailing newline variance
-    orig_content=$(head -n "$orig_lines" "$TEST_DIR/discovering-requirements-SKILL.md.bak" | md5 -q)
-
+@test "injection adds gate inside workflow section" {
     # Add gates
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
     "$INJECT_SCRIPT"
@@ -128,18 +122,17 @@ teardown() {
     # Verify gate was added
     grep -q "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md"
 
-    # Get new line count
-    local new_lines
-    new_lines=$(wc -l < "$SKILLS_DIR/discovering-requirements/SKILL.md")
+    # Gate should be INSIDE workflow (before </workflow>)
+    # Check that </workflow> comes AFTER the gate
+    local gate_line workflow_end_line
+    gate_line=$(grep -n "GPT_REVIEW_GATE_START" "$SKILLS_DIR/discovering-requirements/SKILL.md" | cut -d: -f1)
+    workflow_end_line=$(grep -n "</workflow>" "$SKILLS_DIR/discovering-requirements/SKILL.md" | cut -d: -f1)
 
-    # Gate should add ~17 lines (blank + START marker + content + END marker)
-    local expected_min_lines=$((orig_lines + 15))
-    [[ "$new_lines" -ge "$expected_min_lines" ]]
+    # Gate should be before </workflow>
+    [[ "$gate_line" -lt "$workflow_end_line" ]]
 
-    # Original content should still be at the start (first N lines unchanged)
-    local new_content
-    new_content=$(head -n "$orig_lines" "$SKILLS_DIR/discovering-requirements/SKILL.md" | md5 -q)
-    [[ "$orig_content" == "$new_content" ]]
+    # Gate should be labeled as Phase 9 (part of workflow)
+    grep -q "## Phase 9:" "$SKILLS_DIR/discovering-requirements/SKILL.md"
 
     # Cleanup
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
