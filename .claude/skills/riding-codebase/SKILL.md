@@ -158,6 +158,42 @@ echo '{"timestamp":"'$RIDE_DATE'","agent":"riding-codebase","phase":0,"action":"
 
 ---
 
+## Attention Budget
+
+This skill generates heavy search output. Follow Tool Result Clearing Protocol.
+
+### Token Thresholds
+
+| Context Type | Limit | Action |
+|--------------|-------|--------|
+| Single search/grep | 2,000 tokens | Apply 4-step clearing |
+| Accumulated results | 5,000 tokens | MANDATORY clearing |
+| Full file load | 3,000 tokens | Single file, synthesize immediately |
+| Session total | 15,000 tokens | STOP, synthesize to NOTES.md |
+
+### Clearing Triggers
+
+- `grep`/`ripgrep` returning >20 matches
+- `find`/`glob` returning >30 files  
+- File reads >100 lines
+- Any output exceeding 2K tokens
+
+### 4-Step Clearing
+
+1. **Extract**: Max 10 files, 20 words each, with `file:line`
+2. **Synthesize**: Write to `grimoires/loa/reality/` or NOTES.md
+3. **Clear**: Remove raw output from context
+4. **Summary**: `"Probe: N files → M relevant → reality/"`
+
+### RLM Pattern Alignment
+
+The Retrieve-Load-Modify (RLM) pattern naturally enforces attention budget:
+- **Retrieve**: Probe first, don't load eagerly
+- **Load**: JIT retrieval of relevant sections only
+- **Modify**: Synthesize to grimoire, clear working memory
+
+---
+
 ## Phase 0.5: Codebase Probing (RLM Pattern)
 
 Before loading any files, probe the codebase to determine optimal loading strategy.
