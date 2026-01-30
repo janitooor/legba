@@ -126,3 +126,21 @@ calculateRecencyWeight(createdAtMs, halfLifeDays, floor)
 - Disabled mode (halfLife = 0)
 
 **Tomorrow (Sun 02):** Full test run + PR to Clawdbot
+
+---
+
+## 2026-02-02 — PR Day
+
+### 🎉 Shipped
+
+#### W-002: Memory Recency Weighting PR
+**Target:** Clawdbot  
+**PR:** [#4963](https://github.com/openclaw/openclaw/pull/4963)
+
+Submitted PR for time-based decay in memory search:
+- `calculateRecencyWeight()` with exponential decay
+- Configurable half-life and floor
+- 8 test cases
+- Disabled by default (non-breaking)
+
+Note: PR adds scoring infrastructure. Follow-up needed to wire `createdAt` from storage layer.

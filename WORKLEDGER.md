@@ -14,7 +14,7 @@
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
 | W-001 | LLM-as-Judge Auditor | loa | 🟡 In Review | [#69](https://github.com/0xHoneyJar/loa/pull/69) |
-| W-002 | Memory Recency Weighting | Clawdbot | 🟢 Implemented | - |
+| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/openclaw/openclaw/pull/4963) |
 
 ---
 
@@ -74,4 +74,4 @@
 
 ---
 
-*Last updated: 2026-02-01T06:00:00Z*
+*Last updated: 2026-02-02T06:00:00Z*
