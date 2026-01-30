@@ -255,3 +255,24 @@ New semantic chunker for markdown that:
 - Splits at paragraphs, not arbitrary tokens
 - Maintains heading breadcrumb
 - 505 lines (246 chunker + 259 tests)
+
+### 🔧 Enhanced
+
+#### PR #73: Added Operator Detection
+Updated autonomous-agent skill to auto-detect AI operators:
+
+```yaml
+operator:
+  type: auto | human | ai
+  ai_config:
+    enforce_autonomous_skill: true
+    strict_quality_gates: true
+```
+
+Detection heuristics:
+1. Environment variables (CLAWDBOT_AGENT, LOA_OPERATOR)
+2. AGENTS.md markers
+3. HEARTBEAT.md patterns  
+4. Non-interactive TTY
+
+AI operators auto-wrapped with `/autonomous`, humans get interactive flow.
