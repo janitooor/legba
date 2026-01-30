@@ -12,96 +12,137 @@ COMMANDS_DIR="$ROOT_DIR/.claude/commands"
 CLAUDE_MD="$ROOT_DIR/CLAUDE.md"
 
 # Gate content for each skill - formatted exactly like other phases, no markers
+# Uses explicit "Use the Skill tool" pattern like /ride invocation
 PRD_GATE="### Phase 9: GPT Cross-Model Review
 
-Run the GPT review skill on the PRD:
+**ACTION REQUIRED**: Before proceeding to /architect, invoke the GPT review skill.
 
-/gpt-review prd
+Use the Skill tool now:
+\`\`\`
+Skill: gpt-review
+Args: prd
+\`\`\`
 
-Handle the verdict before proceeding to the next phase."
+Wait for the verdict:
+- **APPROVED**: Continue to next phase
+- **CHANGES_REQUIRED**: Fix issues in PRD, then re-invoke \`Skill: gpt-review, Args: prd\`
+- **SKIPPED**: GPT review is disabled, continue normally"
 
 SDD_GATE="### Phase 5: GPT Cross-Model Review
 
-Run the GPT review skill on the SDD:
+**ACTION REQUIRED**: Before proceeding to /sprint-plan, invoke the GPT review skill.
 
-/gpt-review sdd
+Use the Skill tool now:
+\`\`\`
+Skill: gpt-review
+Args: sdd
+\`\`\`
 
-Handle the verdict before proceeding to sprint planning."
+Wait for the verdict:
+- **APPROVED**: Continue to sprint planning
+- **CHANGES_REQUIRED**: Fix issues in SDD, then re-invoke \`Skill: gpt-review, Args: sdd\`
+- **SKIPPED**: GPT review is disabled, continue normally"
 
 SPRINT_GATE="### Phase 5: GPT Cross-Model Review
 
-Run the GPT review skill on the sprint plan:
+**ACTION REQUIRED**: Before proceeding to /implement, invoke the GPT review skill.
 
-/gpt-review sprint
+Use the Skill tool now:
+\`\`\`
+Skill: gpt-review
+Args: sprint
+\`\`\`
 
-Handle the verdict before proceeding to implementation."
+Wait for the verdict:
+- **APPROVED**: Continue to implementation
+- **CHANGES_REQUIRED**: Fix issues in sprint plan, then re-invoke \`Skill: gpt-review, Args: sprint\`
+- **SKIPPED**: GPT review is disabled, continue normally"
 
 CODE_GATE="### Post-Task: GPT Cross-Model Review
 
-Run the GPT review skill on modified files:
+**ACTION REQUIRED**: After completing each task, invoke the GPT review skill on modified files.
 
-/gpt-review code <modified-file>
+Use the Skill tool now:
+\`\`\`
+Skill: gpt-review
+Args: code <modified-file>
+\`\`\`
 
-Handle the verdict before proceeding to the next task."
+Wait for the verdict:
+- **APPROVED**: Continue to next task
+- **CHANGES_REQUIRED**: Fix issues, then re-invoke with the same file
+- **SKIPPED**: GPT review is disabled, continue normally"
 
 # Success criteria to inject into each skill
 SUCCESS_CRITERION="- **GPT Review**: Cross-model review completed with APPROVED or SKIPPED verdict"
 
-# Command file gates - these go BEFORE "## Next Step" section
-PRD_CMD_GATE="## Phase 8: GPT Cross-Model Review (MANDATORY)
+# Command file gates - inserted before "## Next Step" or file-specific markers
+# Uses explicit "Use the Skill tool" pattern - this is what Claude actually reads
 
-**STOP: Before declaring PRD complete, you MUST run GPT review.**
+# PRD gate - inserted BEFORE "## Next Step" (after PRD creation, before moving to /architect)
+PRD_CMD_GATE="## GPT Cross-Model Review (MANDATORY)
 
-\`\`\`bash
-/gpt-review prd
+**STOP AND EXECUTE**: Before declaring PRD complete, you MUST invoke the GPT review skill NOW.
+
+Use the Skill tool:
+\`\`\`
+Skill: gpt-review
+Args: prd
 \`\`\`
 
-Handle the verdict:
-- **APPROVED**: Proceed to \`/architect\`
-- **CHANGES_REQUIRED**: Fix issues, re-run \`/gpt-review prd\`
-- **SKIPPED**: GPT review disabled, proceed normally"
+Wait for the verdict before proceeding:
+- **APPROVED**: Continue to \`/architect\`
+- **CHANGES_REQUIRED**: Fix issues, re-invoke \`Skill: gpt-review, Args: prd\`
+- **SKIPPED**: GPT review disabled, continue normally"
 
-SDD_CMD_GATE="## Phase 5: GPT Cross-Model Review (MANDATORY)
+SDD_CMD_GATE="## GPT Cross-Model Review (MANDATORY)
 
-**STOP: Before declaring SDD complete, you MUST run GPT review.**
+**STOP AND EXECUTE**: Before declaring SDD complete, you MUST invoke the GPT review skill NOW.
 
-\`\`\`bash
-/gpt-review sdd
+Use the Skill tool:
+\`\`\`
+Skill: gpt-review
+Args: sdd
 \`\`\`
 
-Handle the verdict:
-- **APPROVED**: Proceed to \`/sprint-plan\`
-- **CHANGES_REQUIRED**: Fix issues, re-run \`/gpt-review sdd\`
-- **SKIPPED**: GPT review disabled, proceed normally"
+Wait for the verdict before proceeding:
+- **APPROVED**: Continue to \`/sprint-plan\`
+- **CHANGES_REQUIRED**: Fix issues, re-invoke \`Skill: gpt-review, Args: sdd\`
+- **SKIPPED**: GPT review disabled, continue normally"
 
-SPRINT_CMD_GATE="## Phase 6: GPT Cross-Model Review (MANDATORY)
+SPRINT_CMD_GATE="## GPT Cross-Model Review (MANDATORY)
 
-**STOP: Before declaring Sprint Plan complete, you MUST run GPT review.**
+**STOP AND EXECUTE**: Before declaring Sprint Plan complete, you MUST invoke the GPT review skill NOW.
 
-\`\`\`bash
-/gpt-review sprint
+Use the Skill tool:
+\`\`\`
+Skill: gpt-review
+Args: sprint
 \`\`\`
 
-Handle the verdict:
-- **APPROVED**: Proceed to \`/implement\`
-- **CHANGES_REQUIRED**: Fix issues, re-run \`/gpt-review sprint\`
-- **SKIPPED**: GPT review disabled, proceed normally"
+Wait for the verdict before proceeding:
+- **APPROVED**: Continue to \`/implement\`
+- **CHANGES_REQUIRED**: Fix issues, re-invoke \`Skill: gpt-review, Args: sprint\`
+- **SKIPPED**: GPT review disabled, continue normally"
 
-CODE_CMD_GATE="## Post-Task: GPT Cross-Model Review (MANDATORY)
+CODE_CMD_GATE="## GPT Cross-Model Review (MANDATORY)
 
-**After completing each task, run GPT review on modified files.**
+**STOP AND EXECUTE**: After completing each task, you MUST invoke the GPT review skill NOW.
 
-\`\`\`bash
-/gpt-review code <modified-file>
+Use the Skill tool:
+\`\`\`
+Skill: gpt-review
+Args: code <modified-file>
 \`\`\`
 
-Handle the verdict:
-- **APPROVED**: Proceed to next task
-- **CHANGES_REQUIRED**: Fix issues, re-run \`/gpt-review code\`
-- **SKIPPED**: GPT review disabled, proceed normally"
+Wait for the verdict before proceeding:
+- **APPROVED**: Continue to next task
+- **CHANGES_REQUIRED**: Fix issues, re-invoke with the same file
+- **SKIPPED**: GPT review disabled, continue normally"
 
 # CLAUDE.md banner - injected right after "Dynamic instructions" line
-CLAUDE_MD_BANNER="> ⚠️ **GPT REVIEW IS ENABLED** - After creating/modifying PRD, SDD, sprint plans, or code files, you MUST run \`/gpt-review <type>\` before marking the phase complete. Types: \`prd\`, \`sdd\`, \`sprint\`, \`code\`. This is MANDATORY - check your success criteria."
+# Explicitly tells Claude to use the Skill tool
+CLAUDE_MD_BANNER="> ⚠️ **GPT REVIEW IS ENABLED** - After creating/modifying PRD, SDD, sprint plans, or code files, you MUST use the Skill tool to invoke \`gpt-review\` with the appropriate type (\`prd\`, \`sdd\`, \`sprint\`, \`code\`) BEFORE marking the phase complete. This is MANDATORY."
 
 # Remove success criterion from a skill file
 remove_success_criterion() {
@@ -166,11 +207,13 @@ remove_cmd_gate() {
     awk '
       BEGIN { prev_blank=0; skip=0 }
       /^$/ && !skip { prev_blank=1; prev_line=$0; next }
-      /^## (Phase [0-9]+|Post-Task): GPT Cross-Model Review \(MANDATORY\)/ { skip=1; prev_blank=0; next }
-      /^## Next Step/ {
-        skip=0
-        # Print a blank line before "## Next Step" (preserve original formatting)
-        print ""
+      /^## GPT Cross-Model Review \(MANDATORY\)/ { skip=1; prev_blank=0; next }
+      /^## Next Step/ || /^## / {
+        if (skip) {
+          skip=0
+          # Print a blank line before next section (preserve original formatting)
+          print ""
+        }
       }
       !skip {
         if (prev_blank) { print prev_line; prev_blank=0 }

@@ -162,38 +162,43 @@ teardown() {
     ! grep -q "GPT Cross-Model Review" "$SKILLS_DIR/discovering-requirements/SKILL.md"
 }
 
-@test "injected PRD phase uses /gpt-review skill command" {
+@test "injected PRD phase uses Skill tool pattern for gpt-review" {
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
     "$INJECT_SCRIPT"
 
-    grep -q "/gpt-review prd" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+    # Check for explicit Skill tool invocation pattern
+    grep -q "Skill: gpt-review" "$SKILLS_DIR/discovering-requirements/SKILL.md"
+    grep -q "Args: prd" "$SKILLS_DIR/discovering-requirements/SKILL.md"
 
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "injected SDD phase uses /gpt-review skill command" {
+@test "injected SDD phase uses Skill tool pattern for gpt-review" {
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
     "$INJECT_SCRIPT"
 
-    grep -q "/gpt-review sdd" "$SKILLS_DIR/designing-architecture/SKILL.md"
+    grep -q "Skill: gpt-review" "$SKILLS_DIR/designing-architecture/SKILL.md"
+    grep -q "Args: sdd" "$SKILLS_DIR/designing-architecture/SKILL.md"
 
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "injected Sprint phase uses /gpt-review skill command" {
+@test "injected Sprint phase uses Skill tool pattern for gpt-review" {
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
     "$INJECT_SCRIPT"
 
-    grep -q "/gpt-review sprint" "$SKILLS_DIR/planning-sprints/SKILL.md"
+    grep -q "Skill: gpt-review" "$SKILLS_DIR/planning-sprints/SKILL.md"
+    grep -q "Args: sprint" "$SKILLS_DIR/planning-sprints/SKILL.md"
 
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }
 
-@test "injected Code phase uses /gpt-review skill command" {
+@test "injected Code phase uses Skill tool pattern for gpt-review" {
     cp "$FIXTURES_DIR/configs/enabled.yaml" "$PROJECT_ROOT/.loa.config.yaml"
     "$INJECT_SCRIPT"
 
-    grep -q "/gpt-review code" "$SKILLS_DIR/implementing-tasks/SKILL.md"
+    grep -q "Skill: gpt-review" "$SKILLS_DIR/implementing-tasks/SKILL.md"
+    grep -q "Args: code" "$SKILLS_DIR/implementing-tasks/SKILL.md"
 
     rm -f "$PROJECT_ROOT/.loa.config.yaml"
 }

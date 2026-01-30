@@ -38,11 +38,12 @@ elif [[ "${CLAUDE_TOOL_ARG:-}" =~ sprint\.md ]]; then
 fi
 
 # GPT review is enabled - output JSON that Claude will see
+# Uses explicit Skill tool invocation pattern
 cat << EOF
 {
   "hookSpecificOutput": {
     "hookEventName": "PostToolUse",
-    "additionalContext": "IMPORTANT: You just created/modified a design document. GPT cross-model review is ENABLED. Before marking this phase complete, you MUST run: /gpt-review ${DOC_TYPE:-document}. This is a mandatory step in your workflow - check your success criteria."
+    "additionalContext": "ACTION REQUIRED: You just created/modified a design document. GPT cross-model review is ENABLED. You MUST NOW use the Skill tool to invoke gpt-review with Args: ${DOC_TYPE:-document}. Do this BEFORE declaring this phase complete."
   }
 }
 EOF
