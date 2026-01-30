@@ -54,3 +54,4 @@
 ---
 
 *Last updated: 2026-01-30T22:25:00Z*
+| W-010 | Autonomous Agent Skill | loa | 🟡 In Review | [#73](https://github.com/0xHoneyJar/loa/pull/73) |
