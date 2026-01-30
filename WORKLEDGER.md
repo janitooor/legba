@@ -1,6 +1,6 @@
 # Legba Work Ledger
 
-> Planned work, priorities, and schedule for autonomous improvement work.
+> Work freely, assess costs daily.
 
 ## Standing Directive
 
@@ -15,63 +15,42 @@
 |----|------|--------|--------|-----|
 | W-001 | LLM-as-Judge Auditor | loa | 🟡 In Review | [#69](https://github.com/0xHoneyJar/loa/pull/69) |
 | W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/openclaw/openclaw/pull/4963) |
+| W-003 | Tool Result Clearing | loa | 🔵 Scoped | - |
 
 ---
 
-## Backlog
+## Backlog (Priority Order)
 
-| ID | Task | Target | Priority | Research Source |
-|----|------|--------|----------|-----------------|
-| W-003 | Tool Result Clearing integration | loa | 🔵 Scoped | - |
-| W-004 | Semantic chunking for memory | Clawdbot | Medium | Architecture analysis |
-| W-005 | Session auto-extract | Clawdbot | Medium | Hesam thread |
-| W-006 | Memory consolidation job | Clawdbot | Low | loa patterns |
-| W-007 | BitNet local fallback | Clawdbot | Low | Microsoft BitNet |
-| W-008 | Reflection loops (Ch 4) | loa | Medium | Agentic Design Patterns |
-| W-009 | A2A handoffs (Ch 15) | loa | Low | Agentic Design Patterns |
+| ID | Task | Target | Priority |
+|----|------|--------|----------|
+| W-004 | Semantic chunking for memory | Clawdbot | High |
+| W-005 | Session auto-extract | Clawdbot | Medium |
+| W-006 | Reflection loops (Ch 4) | loa | Medium |
+| W-007 | Memory consolidation job | Clawdbot | Low |
+| W-008 | A2A handoffs (Ch 15) | loa | Low |
 
 ---
 
-## Work Schedule
+## Work Rhythm
 
-### Daily Rhythm
-- **Heartbeat checks**: Every 6 hours (cron)
-- **Research scout**: 1x daily (morning UTC)
-- **PR work**: Active items first
-- **Backlog grooming**: After completing active work
-
-### This Week (2026-01-30 → 02-05)
-
-| Day | Focus | Deliverable |
-|-----|-------|-------------|
-| Thu 30 | ✅ LLM-Judge PR | PR #69 submitted |
-| Fri 31 | Memory recency design | PRD + SDD |
-| Sat 01 | Memory implementation | Experiment branch |
-| Sun 02 | Testing + PR | PR to Clawdbot |
-| Mon 03 | Tool Result Clearing | Scope assessment |
-| Tue 04 | TRC implementation | PR to loa |
-| Wed 05 | Review + backlog | Plan next week |
+- **Heartbeats**: Check active work, continue next task
+- **Your sleep (00-07 UTC)**: Heavy autonomous work
+- **Your active (08-22 UTC)**: Available + medium work
+- **Cost review**: Daily, you'll flag if too high
 
 ---
 
 ## Completed
 
-| ID | Task | Target | Completed | PR |
-|----|------|--------|-----------|-----|
-| - | Research lab setup | Self | 2026-01-30 | - |
-| - | Staging environment | Self | 2026-01-30 | - |
-| - | QMD indexing | Self | 2026-01-30 | - |
-| - | Clawdbot /ride analysis | Research | 2026-01-30 | - |
+| ID | Task | Completed | PR |
+|----|------|-----------|-----|
+| - | Research lab | 2026-01-30 | - |
+| - | Staging env | 2026-01-30 | - |
+| - | Clawdbot /ride | 2026-01-30 | - |
+| - | W-002 PRD+SDD | 2026-01-31 | - |
+| - | W-002 Implementation | 2026-02-01 | - |
+| - | W-003 Scope | 2026-02-03 | - |
 
 ---
 
-## Notes
-
-- PRs exclude CI files (`.github/workflows/`) - add warning in PR description
-- Use loa process: PRD → SDD → Sprint → Implement → Audit → PR
-- One experiment = One PR (clean, traceable)
-- Test in staging before production PRs
-
----
-
-*Last updated: 2026-02-03T06:00:00Z*
+*Last updated: 2026-01-30T22:25:00Z*
