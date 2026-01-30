@@ -97,3 +97,32 @@ Add time-based decay to memory search so recent memories rank higher:
 - Migration — Backfill existing chunks
 
 **Schedule:** Implementation tomorrow (Sat 01)
+
+---
+
+## 2026-02-01 — Implementation Day
+
+### 💻 Implemented
+
+#### W-002: Memory Recency Weighting
+**Target:** Clawdbot  
+**Branch:** `experiment/memory-recency-weighting`
+
+Implemented in `src/memory/hybrid.ts`:
+
+```typescript
+// New function
+calculateRecencyWeight(createdAtMs, halfLifeDays, floor)
+
+// Modified mergeHybridResults to accept:
+- recencyHalfLifeDays: number (0 = disabled)
+- recencyFloor: number (default: 0.1)
+```
+
+**Tests added:** 8 new test cases covering:
+- Brand new memory (weight = 1.0)
+- Half-life decay (~0.5 at 30 days)
+- Floor for very old memories
+- Disabled mode (halfLife = 0)
+
+**Tomorrow (Sun 02):** Full test run + PR to Clawdbot

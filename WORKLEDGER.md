@@ -14,7 +14,7 @@
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
 | W-001 | LLM-as-Judge Auditor | loa | 🟡 In Review | [#69](https://github.com/0xHoneyJar/loa/pull/69) |
-| W-002 | Memory Recency Weighting | Clawdbot | 🟢 PRD+SDD Done | - |
+| W-002 | Memory Recency Weighting | Clawdbot | 🟢 Implemented | - |
 
 ---
 
@@ -74,4 +74,4 @@
 
 ---
 
-*Last updated: 2026-01-31T06:00:00Z*
+*Last updated: 2026-02-01T06:00:00Z*
