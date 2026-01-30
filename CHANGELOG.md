@@ -168,4 +168,54 @@ Note: PR adds scoring infrastructure. Follow-up needed to wire `createdAt` from 
 - riding-codebase
 - implementing-tasks
 
+<<<<<<< Updated upstream
 **Tomorrow (Tue 04):** Implementation
+=======
+[1.1.0]: https://github.com/0xHoneyJar/loa/releases/tag/v1.1.0
+[1.0.1]: https://github.com/0xHoneyJar/loa/releases/tag/v1.0.1
+[1.0.0]: https://github.com/0xHoneyJar/loa/releases/tag/v1.0.0
+[0.19.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.19.0
+[0.18.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.18.0
+[0.17.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.17.0
+[0.16.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.16.0
+[0.15.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.15.0
+[0.14.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.14.0
+[0.13.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.13.0
+[0.12.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.12.0
+[0.11.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.11.0
+[0.10.1]: https://github.com/0xHoneyJar/loa/releases/tag/v0.10.1
+[0.10.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.10.0
+[0.9.2]: https://github.com/0xHoneyJar/loa/releases/tag/v0.9.2
+[0.9.1]: https://github.com/0xHoneyJar/loa/releases/tag/v0.9.1
+[0.9.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.9.0
+[0.8.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.8.0
+[0.7.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.7.0
+[0.6.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.6.0
+[0.5.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.5.0
+[0.4.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.4.0
+[0.3.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.3.0
+[0.2.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.2.0
+[0.1.0]: https://github.com/0xHoneyJar/loa/releases/tag/v0.1.0
+
+### 🎉 Shipped
+
+#### W-003: Tool Result Clearing Integration
+**Target:** loa  
+**PR:** [#72](https://github.com/0xHoneyJar/loa/pull/72)
+
+Added `<attention_budget>` to 4 high-search skills:
+- auditing-security (+47 lines)
+- discovering-requirements (+28 lines)
+- implementing-tasks (+29 lines)
+- riding-codebase (+36 lines)
+
+Each now enforces token thresholds and clearing triggers.
+>>>>>>> Stashed changes
+
+### 🎉 Shipped (continued)
+
+#### W-003: Tool Result Clearing Integration
+**Target:** loa  
+**PR:** [#72](https://github.com/0xHoneyJar/loa/pull/72)
+
+Added `<attention_budget>` to 4 high-search skills.

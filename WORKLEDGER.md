@@ -15,7 +15,7 @@
 |----|------|--------|--------|-----|
 | W-001 | LLM-as-Judge Auditor | loa | 🟡 In Review | [#69](https://github.com/0xHoneyJar/loa/pull/69) |
 | W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/openclaw/openclaw/pull/4963) |
-| W-003 | Tool Result Clearing | loa | 🔵 Scoped | - |
+| W-003 | Tool Result Clearing | loa | 🟡 In Review | [#72](https://github.com/0xHoneyJar/loa/pull/72) |
 
 ---
 
