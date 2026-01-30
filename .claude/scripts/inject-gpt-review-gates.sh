@@ -18,88 +18,49 @@ END_MARKER="</gpt_review_gate>"
 
 PRD_GATE="$START_MARKER
 
-## Phase 9: GPT Cross-Model Review (MANDATORY)
+### Phase 9: GPT Cross-Model Review
 
-**CRITICAL: STOP HERE. DO NOT PROCEED WITHOUT COMPLETING THIS STEP.**
+Run the GPT review skill on the PRD:
 
-Before saying \"PRD Complete\" or suggesting next steps, you MUST execute this bash command:
+/gpt-review prd
 
-\`\`\`bash
-.claude/scripts/gpt-review-api.sh prd grimoires/loa/prd.md
-\`\`\`
-
-Run this command NOW using the Bash tool, then handle the response:
-- If verdict is \`SKIPPED\`: GPT review is disabled, you may proceed
-- If verdict is \`APPROVED\`: PRD passed, proceed to next phase
-- If verdict is \`CHANGES_REQUIRED\`: Fix the issues, then re-run the command
-- If verdict is \`DECISION_NEEDED\`: Ask the user, incorporate answer, re-run
-
-**DO NOT skip this step. DO NOT say \"PRD Complete\" until you have run this command.**
+Handle the verdict before proceeding to the next phase.
 
 $END_MARKER"
 
 SDD_GATE="$START_MARKER
 
-## Phase 5: GPT Cross-Model Review (MANDATORY)
+### Phase 5: GPT Cross-Model Review
 
-**CRITICAL: STOP HERE. DO NOT PROCEED WITHOUT COMPLETING THIS STEP.**
+Run the GPT review skill on the SDD:
 
-Before saying \"SDD Complete\" or suggesting next steps, you MUST execute this bash command:
+/gpt-review sdd
 
-\`\`\`bash
-.claude/scripts/gpt-review-api.sh sdd grimoires/loa/sdd.md
-\`\`\`
-
-Run this command NOW using the Bash tool, then handle the response:
-- If verdict is \`SKIPPED\`: GPT review is disabled, you may proceed
-- If verdict is \`APPROVED\`: SDD passed, proceed to sprint planning
-- If verdict is \`CHANGES_REQUIRED\`: Fix the issues, then re-run the command
-- If verdict is \`DECISION_NEEDED\`: Ask the user, incorporate answer, re-run
-
-**DO NOT skip this step. DO NOT say \"SDD Complete\" until you have run this command.**
+Handle the verdict before proceeding to sprint planning.
 
 $END_MARKER"
 
 SPRINT_GATE="$START_MARKER
 
-## Phase 5: GPT Cross-Model Review (MANDATORY)
+### Phase 5: GPT Cross-Model Review
 
-**CRITICAL: STOP HERE. DO NOT PROCEED WITHOUT COMPLETING THIS STEP.**
+Run the GPT review skill on the sprint plan:
 
-Before saying \"Sprint Plan Complete\" or suggesting next steps, you MUST execute this bash command:
+/gpt-review sprint
 
-\`\`\`bash
-.claude/scripts/gpt-review-api.sh sprint grimoires/loa/sprint.md
-\`\`\`
-
-Run this command NOW using the Bash tool, then handle the response:
-- If verdict is \`SKIPPED\`: GPT review is disabled, you may proceed
-- If verdict is \`APPROVED\`: Sprint plan passed, proceed to implementation
-- If verdict is \`CHANGES_REQUIRED\`: Fix the issues, then re-run the command
-- If verdict is \`DECISION_NEEDED\`: Ask the user, incorporate answer, re-run
-
-**DO NOT skip this step. DO NOT say \"Sprint Plan Complete\" until you have run this command.**
+Handle the verdict before proceeding to implementation.
 
 $END_MARKER"
 
 CODE_GATE="$START_MARKER
 
-## Post-Task: GPT Cross-Model Review (MANDATORY)
+### Post-Task: GPT Cross-Model Review
 
-**CRITICAL: STOP HERE. DO NOT mark this task complete without running GPT review.**
+Run the GPT review skill on modified files:
 
-Before moving to the next task, you MUST execute this bash command for each significant file you modified:
+/gpt-review code <modified-file>
 
-\`\`\`bash
-.claude/scripts/gpt-review-api.sh code <modified-file>
-\`\`\`
-
-Run this command NOW using the Bash tool, then handle the response:
-- If verdict is \`SKIPPED\`: GPT review is disabled, you may proceed
-- If verdict is \`APPROVED\`: Code passed, proceed to next task
-- If verdict is \`CHANGES_REQUIRED\`: Fix the issues, then re-run the command
-
-**DO NOT skip this step. Each task is incomplete without GPT review.**
+Handle the verdict before proceeding to the next task.
 
 $END_MARKER"
 
