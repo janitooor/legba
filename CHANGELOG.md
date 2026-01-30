@@ -244,3 +244,14 @@ PREFLIGHT → DISCOVER → DESIGN → IMPLEMENT → AUDIT → SUBMIT → DEPLOY 
 - Complete trajectory logging
 
 **Files:** 1,071 lines across 5 files
+
+#### W-004: Semantic Memory Chunking
+**Target:** Clawdbot  
+**PR:** [#4987](https://github.com/openclaw/openclaw/pull/4987)
+
+New semantic chunker for markdown that:
+- Parses headings into sections
+- Detects content types (prose/list/code/table)
+- Splits at paragraphs, not arbitrary tokens
+- Maintains heading breadcrumb
+- 505 lines (246 chunker + 259 tests)
