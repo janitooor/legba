@@ -113,21 +113,20 @@ This skill follows the **Tool Result Clearing Protocol** (`.claude/protocols/too
 | Full file load | 3,000 tokens | Single file, synthesize immediately |
 | Session total | 15,000 tokens | STOP, synthesize to NOTES.md |
 
-### Clearing Trigger Points
+### Clearing Triggers for Auditing
 
-Apply clearing after:
 - [ ] `grep`/`ripgrep` returning >20 matches
 - [ ] `find` returning >30 files
 - [ ] `cat` on files >100 lines
 - [ ] Any search exceeding 2K tokens
 - [ ] Accumulated context exceeding 5K tokens
 
-### 4-Step Clearing Process
+### 4-Step Clearing
 
 1. **Extract**: Max 10 files, 20 words per finding, with `file:line` refs
 2. **Synthesize**: Write to `grimoires/loa/NOTES.md` under audit context
 3. **Clear**: Do NOT keep raw results in working memory
-4. **Summary**: Keep only `"Search: N results → M high-signal → NOTES.md"`
+4. **Summary**: Keep only `"Audit: N results → M high-signal → NOTES.md"`
 
 ### Semantic Decay Stages
 
