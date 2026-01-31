@@ -14,15 +14,12 @@
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
 | W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
-| W-003 | Tool Result Clearing | loa | ✅ Done | - |
-
----
+| W-004 | Semantic chunking for memory | Clawdbot | 🔵 Scoped | - |
 
 ## Backlog (Priority Order)
 
 | ID | Task | Target | Priority |
 |----|------|--------|----------|
-| W-004 | Semantic chunking for memory | Clawdbot | High |
 | W-005 | Session auto-extract | Clawdbot | Medium |
 | W-006 | Reflection loops (Ch 4) | loa | Medium |
 | W-007 | Memory consolidation job | Clawdbot | Low |
@@ -51,7 +48,8 @@
 | - | W-002 PRD+SDD | 2026-01-31 | - |
 | - | W-002 Implementation | 2026-02-01 | - |
 | - | W-003 Scope | 2026-02-03 | - |
+| - | W-004 Scope | 2026-01-31 | - |
 
 ---
 
-*Last updated: 2026-01-31T07:25:00Z*
+*Last updated: 2026-01-31T07:35:00Z*
