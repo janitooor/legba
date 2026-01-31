@@ -13,9 +13,8 @@
 
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
-| W-001 | LLM-as-Judge Auditor | loa | 🟡 In Review | [#69](https://github.com/0xHoneyJar/loa/pull/69) |
-| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/openclaw/openclaw/pull/4963) |
-| W-003 | Tool Result Clearing | loa | 🔵 Scoped | - |
+| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
+| W-003 | Tool Result Clearing | loa | ✅ Done | - |
 
 ---
 
@@ -44,6 +43,8 @@
 
 | ID | Task | Completed | PR |
 |----|------|-----------|-----|
+| W-003 | Tool Result Clearing | 2026-01-31 | - (skills already had attention_budget) |
+| W-001 | LLM-as-Judge Auditor | 2026-01-31 | [#69](https://github.com/0xHoneyJar/loa/pull/69) ✅ |
 | - | Research lab | 2026-01-30 | - |
 | - | Staging env | 2026-01-30 | - |
 | - | Clawdbot /ride | 2026-01-30 | - |
@@ -53,4 +54,4 @@
 
 ---
 
-*Last updated: 2026-01-30T22:25:00Z*
+*Last updated: 2026-01-31T07:25:00Z*
