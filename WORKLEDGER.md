@@ -13,7 +13,7 @@
 
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
-| W-002 | Memory Recency Weighting | Clawdbot | 🟠 CI Fix in Progress | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
+| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review (CI Fixed) | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
 | W-004 | Semantic chunking for memory | Clawdbot | 🔵 Scoped | - |
 
 ## Backlog (Priority Order)
