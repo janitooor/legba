@@ -33,4 +33,12 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 ---
 
+## My Setup
+
+### GitHub
+- **Repository:** https://github.com/janitooor/legba
+- **Workspace branch:** `legba/workspace`
+- **Git identity:** `Clawd Agent <agent@clawd.bot>`
+- **Commit regularly!** Don't let work go unpushed.
+
 Add whatever helps you do your job. This is your cheat sheet.
