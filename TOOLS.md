@@ -33,4 +33,18 @@ Skills are shared. Your setup is yours. Keeping them apart means you can update 
 
 ---
 
+## My Setup
+
+### GitHub
+- **Repository:** https://github.com/janitooor/legba
+- **Workspace branch:** `legba/workspace`
+- **Git identity:** `Clawd Agent <agent@clawd.bot>`
+- **Commit regularly!** Don't let work go unpushed.
+
 Add whatever helps you do your job. This is your cheat sheet.
+
+### Wallet
+- **Address:** `0x7D26dB0443Fd89b6a135524A47cE6b3Db686E801`
+- **Keys:** Stored in `.secrets/wallet.json` (gitignored, chmod 600)
+- **Purpose:** Receiving Mibera NFT, onchain identity
+- **Chain:** Berachain (chain ID 80094) for Mibera
