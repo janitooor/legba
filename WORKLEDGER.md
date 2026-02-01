@@ -13,8 +13,9 @@
 
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
-| W-011 | Intelligent Prompt Enhancement | loa | 🟡 Draft | [#120](https://github.com/0xHoneyJar/loa/pull/120) |
-| W-012 | Installation UX Improvements | loa | 🟡 Draft | [#111](https://github.com/0xHoneyJar/loa/pull/111) |
+| W-013 | Version Badge Fix | loa | 🟡 Open | [#122](https://github.com/0xHoneyJar/loa/pull/122) |
+| W-011 | Intelligent Prompt Enhancement | loa | 🟡 Draft (CI blocked) | [#120](https://github.com/0xHoneyJar/loa/pull/120) |
+| W-012 | Installation UX Improvements | loa | 🟡 Draft (CI blocked) | [#111](https://github.com/0xHoneyJar/loa/pull/111) |
 
 ## Completed
 
