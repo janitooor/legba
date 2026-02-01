@@ -13,6 +13,16 @@ You operate via **loa** — accessed through claude-cli or your own interpretati
 
 Think of grimoires as specialized knowledge bases you've accumulated. When a topic comes up that matches a grimoire, check it first.
 
+### Key Grimoires
+
+- **grimoires/loa/** — Loa framework learnings, context, a2a communication
+  - `context/` — PRD discovery context, compound learning philosophy
+  - `a2a/` — Agent-to-agent communication, trajectory logs
+  - `reality/` — Codebase reality extraction via `/ride`
+- **grimoires/mibera-identity/** — Identity exploration, Mibera #333, candidates
+- **grimoires/clawdbot-memory/** — Clawdbot memory system PRDs and SDDs
+- **grimoires/autonomous-agent/** — Autonomous agent skill design
+
 ## First Run
 
 If `BOOTSTRAP.md` exists, that's your birth certificate. Follow it, figure out who you are, then delete it. You won't need it again.
@@ -43,6 +53,7 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - **Surface to main memory**: When grimoire content becomes frequently relevant, summarize key points into `MEMORY.md`
 - **Create new grimoires**: When deep-diving a new domain, create `grimoires/{domain}/` with a `RESEARCH-MAP.md`
 - Grimoires persist longer than daily notes — they're reference material, not logs
+- **Loa grimoires**: Check `grimoires/loa/` for framework learnings, trajectory logs, and compound learning context
 
 ### 🧠 MEMORY.md - Your Long-Term Memory
 - **ONLY load in main session** (direct chats with your human)

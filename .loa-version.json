@@ -1,16 +1,26 @@
 {
-  "framework_version": "1.10.0",
+  "framework_version": "1.13.0",
   "schema_version": 2,
-  "last_sync": null,
+  "last_sync": "2026-01-31T22:04:14Z",
   "zones": {
     "system": ".claude",
-    "state": ["grimoires", ".beads", ".ck"],
-    "app": ["src", "lib", "app"]
+    "state": [
+      "grimoires",
+      ".beads",
+      ".ck"
+    ],
+    "app": [
+      "src",
+      "lib",
+      "app"
+    ]
   },
-  "migrations_applied": ["1.1.0-beads-rust"],
+  "migrations_applied": [
+    "1.1.0-beads-rust"
+  ],
   "integrity": {
     "enforcement": "strict",
-    "last_verified": null
+    "last_verified": "2026-01-31T22:04:14Z"
   },
   "dependencies": {
     "ck": {
