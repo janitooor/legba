@@ -13,8 +13,9 @@
 
 | ID | Task | Target | Status | PR |
 |----|------|--------|--------|-----|
-| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review (CI Fixed) | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
-| W-004 | Semantic chunking for memory | Clawdbot | 🔵 Scoped | - |
+| W-002 | Memory Recency Weighting | Clawdbot | 🟡 In Review | [#4963](https://github.com/clawdbot/clawdbot/pull/4963) |
+| W-004 | Semantic chunking for memory | Clawdbot | 🟡 In Review | [#4987](https://github.com/clawdbot/clawdbot/pull/4987) |
+| W-009 | Self-distillation research | loa | ✅ Submitted | [#108](https://github.com/0xHoneyJar/loa/issues/108) |
 
 ## Backlog (Priority Order)
 
@@ -52,4 +53,4 @@
 
 ---
 
-*Last updated: 2026-01-31T22:05:00Z*
+*Last updated: 2026-02-01T00:05:00Z*
